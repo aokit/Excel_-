@@ -1,0 +1,18 @@
+' -*- coding:shift_jis-dos -*-
+
+' macro の code として読み込む file を設定する（拡張子まで書く）
+
+'main
+'./modMain.bas
+
+'modules
+'./modSample.bas
+' ↑
+' この行を commentout / in して、excel 側でリロード
+' （Ctrl + Shift + m)すると、マクロのリストが変わる。
+'
+'./TBL_RECT.bas
+'
+./x2p》中間処理シート.bas
+./x2p》審査件数.bas
+./x2p》別表１～３.bas
