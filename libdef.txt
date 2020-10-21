@@ -16,3 +16,4 @@
 ./x2p》中間処理シート.bas
 ./x2p》審査件数.bas
 ./x2p》別表１～３.bas
+./x2p》Lib1.bas

@@ -4,6 +4,17 @@
 ' libdef.txt に記載しておく。
 ' 2020/10/20 12:45 BAS コードをインポートするモジュールをコード内で明示的に
 ' 指定していないときにはデフォルトで Module1 が使われる。これに対応した。
+' シートの作成が間に合わないためエラーが起きている。
+' 仮説：シートを追加しているので、Worksheet.Activate()がキックされてしまっている。
+' この段階では、追加してもキックしないようにするか、副作用を消さないとだめだ。
+' 2020/10/21 19:55 シートを Add しても CodeName が無いためのインポート失敗を解決。
+' CodeNameが有効になるまでに、VBProject へのアクセスが最低１回必要だった、とのこと。
+' ---
+' https://social.msdn.microsoft.com/Forums/expression/ja-JP
+' /d8862af1-4790-44a8-a6b8-89fc9681f7af/excel-12398-codename
+' ?forum=officesupportteamja
+'      Dim tmp As String : tmp = ThisWorkbook.VBProject.Name
+
 
 ' ==== https://blog.goo.ne.jp/end-u/e/b1e41190650cbb1ff2c70bafe92a6dce ====
 ' = 1/3 =
@@ -11,7 +22,9 @@ Option Explicit
 Dim flg     As Boolean
 ' Dim shCount As Long
 Public shCount As Long
+Public booted As Boolean
 Dim shName  As String
+' booting = True
 ' =========================================================================
 
 
@@ -56,6 +69,7 @@ Private Sub Workbook_Open()
   shCount = Sheets.count
   Debug.Print shCount
   ' MsgBox "ブックのシート数：" & shCount
+
 End Sub
 
 
@@ -152,12 +166,15 @@ Private Function loadModule(ByVal pathConf As String) As String
     End If
   Next i
   loadModule = msgError
-
+  
 End Function
 
 
 '----------------------------- Functions / Subs ---------------
 
+' シートモジュールとして外部ファイルに記載したスクリプトをシートを
+' 指定してインポートする
+' 
 Private Sub importModule(ByVal pathModule As String)
   Dim aArr As Variant
   aArr = Split(pathModule, "》")
@@ -177,8 +194,23 @@ Private Sub importModule(ByVal pathModule As String)
     On Error GoTo 0 ' On Error Resume Next を使用して有効にしたエラー処理を無効にする.
     If aSheet Is Nothing Then
       ' シートがない場合の処理
+      Debug.Print "モジュールのインポート指定先のシートを作成します：" & aArr2(0) 
+      MsgBox "モジュールのインポート指定先のシートを作成します：" & aArr2(0) 
       Set aSheet = ActiveWorkbook.Worksheets.Add
+      ' あらかじめ『コードを表示』しておくと、ここでシートができ、シートの名前がつき、
+      ' CodeNameも準備されたのがわかる。ところが、それなしにファイルをダブルクリック
+      ' で開くと、シートの名前がつくところまでは確認できるが、CodeNameがないままと
+      ' なっている。
+      ' https://social.msdn.microsoft.com/Forums/expression/ja-JP
+      ' /d8862af1-4790-44a8-a6b8-89fc9681f7af/excel-12398-codename
+      ' ?forum=officesupportteamja
+      Dim tmp As String : tmp = ThisWorkbook.VBProject.Name
       aSheet.Name = aArr2(0)
+      While asheet.CodeName = ""
+         MsgBox "インポート指定先のシートが無名" & asheet.CodeName
+      Wend
+      Debug.Print "モジュールのインポート指定先のシートができました：" & aSheet.CodeName
+      MsgBox "モジュールのインポート指定先のシートができました：" & aSheet.CodeName
     Else
       ' シートがある場合（ほんとはそのシートのモジュールを全部消してから）
       With ThisWorkbook.VBProject.VBComponents(aSheet.CodeName).CodeModule
@@ -200,16 +232,27 @@ Private Sub importModule2(ByVal pathModule As String, ByVal CodeName As String)
     ' ThisWorkbook.VBProject.VBComponents(sCN).CodeModule
     ' Debug.Print aInsert.Name
 
+    ' インポート先の検出：
+    ' VBComponents.Import によるインポートではシート名を指定することができない。
+    ' インポート先は標準モジュール配下のオブジェクトとなりその名前は、通常は
+    ' スクリプトの中のAttributeで、以下のように指定される。しかし、Attribute
+    ' でも、シート名を指定することまではできないので、結局スクリプトのファイル名
+    ' で指定する。結果として、インポート先となる標準モジュール配下のオブジェクト
+    ' 名もファイル名から抽出する。
+    ' Attribute VB_Name = "任意の識別子》シート名"
+    ' ただし、上記の指定がないと、ファイル名に指定してあっても、そのオブジェクト
+    ' 名は、 Module1 になる（上書きされる）
+    ' 《逆に：Attribute VB_Name = "tmp" などと共通にしておいて、デフォルトの
+    ' 　Module1 とは当たらないようにしておくのも手かもしれない。また、
+    ' 　あらかじめモジュール名のコレクションを持っておいて、 .Importしたあとの
+    ' 　差分を確認して、インポートされたモジュールを特定する方法もあるだろう》
     Dim aArr As Variant
     Dim aArr2 As Variant
-    Dim aArr3 As Variant
     aArr = Split(pathModule, "\")
     aArr2 = Split(aArr(UBound(aArr)), ".")
     ' pathModule        ：G:\user01\Github\RECT_tsv\FixValue》値固定.bas
     ' aArr(UBound(aArr))：FixValue》値固定.bas
-    ' aArr2(0)          ：FixValue》値固定
-    aArr3 = Split(aArr2(0), "》")
-    ' aArr3(1)          ：値固定
+    ' aArr2(0)          ：FixValue》値固定　←これがオブジェクト名
     
     Dim Code As String
     Debug.Print CodeName
@@ -221,15 +264,21 @@ Private Sub importModule2(ByVal pathModule As String, ByVal CodeName As String)
     Set aModule = ThisWorkbook.VBProject.VBComponents(aArr2(0))
     Set aModule = ThisWorkbook.VBProject.VBComponents("Module1")
     On Error GoTo 0 ' On Error Resume Next を使用して有効にしたエラー処理を無効にする.
+
+    ' 移動したいシートモジュール
+    Debug.Print CodeName
+    MsgBox "つぎのシートにモジュールをコピーします：" & CodeName
+    Dim asModule As Variant
+    Set asModule = ThisWorkbook.VBProject.VBComponents(CodeName)
+
+    ' 標準モジュールからシートモジュールへのコピー
     
     With aModule.CodeModule
         Code = .Lines(1, .CountOfLines)
     End With
-    With ThisWorkbook.VBProject.VBComponents(CodeName).CodeModule
+    With asModule.CodeModule
         .AddFromString Code
     End With
-    ' Dim aModule As Variant 'VBComponent
-    ' Set aModule = Application.VBE.ActiveVBProject.VBComponents(aArr2(0))
     Application.VBE.ActiveVBProject.VBComponents.Remove aModule
     
 End Sub
@@ -527,30 +576,34 @@ End Sub
 '-------------------------------------------------
 
 Private Sub Workbook_SheetActivate(ByVal Sh As Object)
-    Dim m As Long
 
-    ' MsgBox shCount
-    ' shCount を Public にしたのだが、ここで値を参照できていない。
-    ' しかたないので、初回（shCountの値が０）のときには実行しない
-    ' しかけにした。
-    m = Sheets.count - shCount
-    If (m > 0) And (shCount > 0) Then
-        MsgBox m
-        shName = Sh.Name
-        ' ====
-        ' ワークシートが追加されたとき実行される関数の名前
-        ' ====
-        Application.OnTime Now, Me.CodeName & ".test"
-        If Sheets.count > shCount Then
-            shCount = shCount + 1
-            ' ActiveSheet.Next.Activate
-            ' ここで呼んではだめ。
-        End If
-    ElseIf m < 0 Then
-        ' shCount = shCount + m
-        shCount = Sheets.count
-        MsgBox shCount
-    End If
+   ' bookの booted 前はワークシートの活性に反応しない。
+   If Not booted Then Exit sub
+
+   Dim m As Long
+
+   ' MsgBox shCount
+   ' shCount を Public にしたのだが、ここで値を参照できていない。
+   ' しかたないので、初回（shCountの値が０）のときには実行しない
+   ' しかけにした。
+   m = Sheets.count - shCount
+   If (m > 0) And (shCount > 0) Then
+      MsgBox m
+      shName = Sh.Name
+      ' ====
+      ' ワークシートが追加されたとき実行される関数の名前
+      ' ====
+      Application.OnTime Now, Me.CodeName & ".test"
+      If Sheets.count > shCount Then
+         shCount = shCount + 1
+         ' ActiveSheet.Next.Activate
+         ' ここで呼んではだめ。
+      End If
+   ElseIf m < 0 Then
+      ' shCount = shCount + m
+      shCount = Sheets.count
+      MsgBox shCount
+   End If
 End Sub
 '-------------------------------------------------
 ' 新規シートの追加は、flg を使って識別し、なにもしない。
