@@ -56,6 +56,9 @@ Const SHORTKEY_RELOAD As String = "^r" 'ctrl + r
 
 'ワークブック オープン時に実行
 Private Sub Workbook_Open()
+
+  Call 開始時抑制
+
   shCount = Sheets.count ' = 2/3 =' ==== https://blog.goo.ne.jp/... ====
   If ENABLE_WORKBOOK_OPEN = False Then
     Exit Sub
@@ -70,6 +73,8 @@ Private Sub Workbook_Open()
   Debug.Print shCount
   ' MsgBox "ブックのシート数：" & shCount
 
+  Call 終了時解放
+
 End Sub
 
 
@@ -80,6 +85,23 @@ End Sub
 
 
 '----------------------------- public Subs/Functions ---------------
+
+Public Sub 開始時抑制()
+　　Application.ScreenUpdating = False '画面描画を停止
+　　Application.Cursor = xlWait 'ウエイトカーソル
+　　Application.EnableEvents = False 'イベントを抑止
+　　Application.DisplayAlerts = False '確認メッセージを抑止
+　　Application.Calculation = xlCalculationManual '計算を手動に
+End Sub
+
+Public Sub 終了時解放()
+　　Application.StatusBar = False 'ステータスバーを消す
+　　Application.Calculation = xlCalculationAutomatic '計算を自動に
+　　Application.DisplayAlerts = True '確認メッセージを開始
+　　Application.EnableEvents = True 'イベントを開始
+　　Application.Cursor = xlDefault '標準カーソル
+　　Application.ScreenUpdating = True '画面描画を開始
+End Sub
 
 Public Sub reloadModule()
 

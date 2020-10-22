@@ -6,8 +6,19 @@ Sub マクロ実行欄取得()
   Application.Calculation = xlCalculationManual
   Application.ScreenUpdating = False
   
+  On Error GoTo Setting_Error
   D_start = Me.Range("期間＿開始").Value
   D_end = Me.Range("期間＿終了").Value
+  i1_col = Me.Range("BU抽出").Value
+  i2_col = Me.Range("区分抽出").Value
+  i3_col = Me.Range("仕向地抽出").Value
+  i4_col = Me.Range("包括抽出").Value
+  i5_col = Me.Range("特例抽出").Value
+  i6_col = Me.Range("非許可特例抽出").Value
+  tmp = Me.Range("期間の審査数").Value
+  ' 上記の領域が定義されていないと、エラーが生じる
+  On Error GoTo 0
+  
   ActiveWorkbook.Sheets("yushutsu_kobetsu").Activate
   n1_col = 15 ' BU
   n2_col = 8  ' 取引区分
@@ -112,7 +123,38 @@ Sub マクロ実行欄取得()
   Application.ScreenUpdating = True
   Application.Calculation = xlCalculationAutomatic
 
+  Exit Sub
+
+Setting_Error:
+  Debug.Print "シートの名前定義に不足があります。"
+  MsgBox "シートの名前定義に不足があります。"
+  
 End Sub
 
 
-
+' Private
+Sub belong2whom(組織定義の領域 As Range, 参照領域 As Range, 所属領域 As Range）
+   ' 組織名変換のためのサブルーチンを作ることにした。
+   ' ＝＝＝＝＝＝＝＝
+   ' belong2whom(組織定義の領域,参照領域,所属領域）
+   ' ＝＝＝＝
+   ' 参照領域にある文字列を、組織定義の領域で検索し、帰属領域に結果を書き込む。
+   ' 
+   ' 《組織定義の領域》
+   ' 下位組織名Bが帰属する上位組織名A（さらには、上位組織名Aが保有する下位組織名B）
+   ' を以下の正規表現で列に配置した領域。上位組織名Aと同じ組織名を下位組織名Bとして
+   ' 有する場合があるが明記しない。また、下位組織名Bの無い上位組織名Aもありうる。
+   ' (A(B*))+
+   ' 上位組織Aと下位組織Bはセルの背景色によって識別される。
+   ' 領域の第１行の背景色によって、上位組織が定義される。
+   ' 
+   ' 《参照領域》
+   ' 帰属する上位組織名Aを得たい下位組織名Bを列に配置したもの
+   ' 
+   ' 《帰属領域》
+   ' 帰属することがわかった上位組織名Aを書き込む領域
+   ' 
+   ' なお、参照領域と所属領域は同じ行数の１列領域であること。
+   ' ＝＝＝＝＝＝＝＝
+   ' 
+End sub
