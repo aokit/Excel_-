@@ -27,6 +27,8 @@ Private Sub 集計状況の各範囲の名前定義()
    Call newName2Range(Range("B23"), Range("A23").Value)
 End Sub
 
+' 名前をつけた範囲にあらたな名前をつける
+' （まだ名前をつけていなければはじめて名前をつける）
 Private Sub newName2Range(rng As Range, strName As String)
    Dim nm As Name
    For Each nm In Names
@@ -44,9 +46,41 @@ Sub 集計名_組織_初期化()
 End Sub
 
 Private Sub 組織略称初期化()
-   Dim 組織略称 As String
-   
-   Debug.Print UBound(組織略称)
+   Dim cc() As Long
+   Dim cs() As String
+   Dim 組織略称 As Variant
+   Dim 組織 As Range
+   Set 組織 = ThisWorkbook.Names("組織").RefersToRange
+   ' 名前付きの範囲（Named Range）から配列へ：.RefersToRange
+   組織略称 = 組織
+   Dim n As Long
+   Dim m As Long
+   m = UBound(組織略称)
+   Debug.Print m
+   Debug.Print LBound(組織略称)
+   n = 0
+   ' ReDim cc(n)
+   ' ReDim cs(n)
+   Dim i As Long, j As Long, k As Long
+   i = 0
+   j = m ' 最小値が m ということは無いはずなのでシードにする。
+   k = 0
+   For Each c In 組織
+      ' Debug.Print c.Row + 0 & ":" & セルの固定色(c) & ":" & c.Value
+      ' Debug.Print n > c.Row
+      i = c.Row
+      If i < j Then j = i
+      If i > k Then k = i
+      If n < i Then
+         n = n + m
+         ReDim cc(n)
+         ReDim cs(n)
+      End If
+      cc(i) = セルの固定色(c)
+      cs(i) = c.Value
+   Next c
+   Debug.Print j
+   Debug.Print k
 End Sub
 
 Function カラムの最終行(n As String, k) As Long

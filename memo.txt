@@ -163,3 +163,4 @@ For Each c In ThisWorkbook.Names("組織").RefersToRange
 
 
 
+
