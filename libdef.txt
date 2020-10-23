@@ -17,3 +17,4 @@
 ./x2p》審査件数.bas
 ./x2p》別表１～３.bas
 ./x2p_Lib1.bas
+./x2p》ダッシュボード.bas
