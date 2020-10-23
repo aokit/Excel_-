@@ -3,6 +3,7 @@
 './x2p》ダッシュボード.bas
 
 Sub 名前の定義確認の生成()
+   Call 開始時抑制
    Range("B6").Value = "=isref(" & Range("A6").Value & ")"
    Range("B7").Value = "=isref(" & Range("A7").Value & ")"
    Range("B8").Value = "=isref(" & Range("A8").Value & ")"
@@ -14,6 +15,7 @@ Sub 名前の定義確認の生成()
    Range("B14").Value = "=isref(" & Range("A14").Value & ")"
    Range("B15").Value = "=isref(" & Range("A15").Value & ")"
    Call 集計状況の各範囲の名前定義
+   Call 終了時解放
 End Sub
 
 Private Sub 集計状況の各範囲の名前定義()
@@ -37,8 +39,18 @@ Private Sub newName2Range(rng As Range, strName As String)
       RefersToLocal := "=" & rng.Address(External := True)
 End Sub
 
+Sub 集計名_組織_初期化()
+   Call 組織略称初期化
+End Sub
+
+Private Sub 組織略称初期化()
+   Dim 組織略称 As String
+   
+   Debug.Print UBound(組織略称)
+End Sub
+
 Function カラムの最終行(n As String, k) As Long
-   ' n - 範囲与えた名前（文字列）
+   ' n - 範囲に与えた名前（文字列）
    ' k - その範囲の中のカラム番号
    Dim r1 As Long
    Dim r2 As Long
