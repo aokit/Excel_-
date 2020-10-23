@@ -126,6 +126,12 @@ B:複数の仕向地として表記されているもの
 ・名前『年間登録』も設定する：集計名と件数
 ・名前『個別審査』も設定する
 ※　ここで、Range から配列に読み込みができない。なんでかな。
+https://riptutorial.com/ja/excel-vba/example/26794/%E5%90%8D%E5%89%8D%E4%BB%98%E3%81%8D%E7%AF%84%E5%9B%B2%E9%85%8D%E5%88%97
+これで、いいみたい。具体的には
+For Each c In ThisWorkbook.Names("組織").RefersToRange
+ができた。
+組織略称 = ThisWorkbook.Names("組織").RefersToRange
+もできた。
 
 ◆ダッシュボード　のシートで『集計』ボタンをクリックすると
 ◆仕向地　のシート　の　別名　のカラムに例外となった名前が入る。また、
