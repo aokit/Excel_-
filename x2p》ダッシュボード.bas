@@ -27,9 +27,10 @@ Private Sub 集計状況の各範囲の名前定義()
    Call newName2Range(Range("B23"), Range("A23").Value)
 End Sub
 
-' 名前をつけた範囲にあらたな名前をつける
-' （まだ名前をつけていなければはじめて名前をつける）
 Private Sub newName2Range(rng As Range, strName As String)
+   '
+   ' 名前つきの範囲にあらたな名前を与える
+   '
    Dim nm As Name
    For Each nm In Names
       If rng.Address = nm.RefersToRange.Address Then
@@ -37,8 +38,29 @@ Private Sub newName2Range(rng As Range, strName As String)
       End If
    Next
    rng.Parent.Parent.Names.Add _
-      Name := strName, _
-      RefersToLocal := "=" & rng.Address(External := True)
+      Name:=strName, _
+      RefersToLocal:="=" & rng.Address(External:=True)
+End Sub
+
+Private Sub NamedRangeUpdate(strName As String, rng As Range)
+   '
+   ' 名前つきの範囲を新たな範囲に更新する
+   '
+   With ActiveWorkbook
+      .Names.Add Name:=strName, RefersTo:=rng
+   End With
+   '
+   Dim nm As Name
+   For Each nm In Names
+      If nm = strName Then
+         nm.Parent.Parent.
+      If rng.Address = nm.RefersToRange.Address Then
+         nm.Delete
+      End If
+   Next
+   rng.Parent.Parent.Names.Add _
+      Name:=strName, _
+      RefersToLocal:="=" & rng.Address(External:=True)
 End Sub
 
 Sub 集計名_組織_初期化()
@@ -46,17 +68,77 @@ Sub 集計名_組織_初期化()
 End Sub
 
 Private Sub 組織略称初期化()
+   Dim 組織略称CI() As Long
+   Dim 組織略称ST() As String
+   Call 組織略称読み取り(組織略称CI, 組織略称ST)
+   Dim m As Long
+   m = UBound(組織略称ST)
+   For r = 1 To m
+      Debug.Print 組織略称ST(r) & ":" & 組織略称CI(r)
+   Next r
+End Sub
+
+Private Sub 組織略称構成(組織略称CI() As Long, 組織略称ST() As String)
+   Dim 集計名と別名() As String
+   '
+   Dim シートの集計名と別名 As Range
+   Set シートの集計名と別名 = ThisWorkbook.Names("集計名と別名").RefersToRange
+   '
+   シートの集計名と別名 = 集計名と別名
+   '
+End Sub
+
+Private Sub 配列からセルへ書き出す■実験■()
+   '
+   Dim strName As String
+   strName = "集計名と別名"
+   Dim 集計名と別名() As String
+   '
+   ReDim 集計名と別名(1 To 4, 1 To 4)
+   '                 ┗明示的に『１』から始める。デフォルトで０から始まると
+   '                 　ずれてしまう。
+   '
+   集計名と別名(1, 1) = "┏左上"
+   集計名と別名(3, 3) = "右下┛"
+   集計名と別名(4, 4) = "範囲外"
+   '
+   ' 『仕向地』のシートに『集計名と別名』という名前で、3x3の範囲を設定した。
+   ' 　最初に設定してあっても、書き出す配列の大きさに変更しないと
+   ' ・はみ出している範囲は書き出されない
+   ' ・不足していると『#N/A』が書き出される
+   ' 
+   Dim シートの集計名と別名 As Range
+   Set シートの集計名と別名 = _
+       ThisWorkbook.Names(strName).RefersToRange.Resize(4,4)
+   '    .Resize(＜行＞,＜列＞) で書き出し範囲を変えられる┛
+   '
+   シートの集計名と別名 = 集計名と別名
+   '
+   With ActiveWorkbook
+      .Names.Add Name:=strName, RefersTo:=シートの集計名と別名
+   End With
+
+   '
+End Sub
+
+Private Sub 組織略称読み取り(組織略称CI() As Long, 組織略称ST() As String)
+   ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+   ' 『範囲』と名前付けした範囲を読み取り：
+   ' 　１：第１引数として指定した配列に、範囲の ColorIndex をLong型で返す。
+   ' 　２：第２引数として指定した配列に、範囲の セルの値 をString型で返す。
+   ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+   '
    Dim 組織略称() As Variant
-   ' 　　　　　　　　┗『組織略称』は名前付き範囲から変換された 範囲-Range- を代入す
-   '                  る。範囲なので次元は２で各次元の要素数は不明。また、要素の型も
-   '                  Variant としている。
-   '                  では、動的配列として
-   '                  ・Q:範囲の大きさがわかれば、ReDimで明示的に指定してもよい？
-   '                  ・A:『範囲のカラム数』や『範囲の行数』は、.Rows.Count などで
-   '                  手に入れることができるが、範囲の値を手に入れるのはかなり面倒
-   '                  である。そのため推奨される方法ではない。
-   '                  （まだこの時点では次元も大きさも未定）として
-   ' 　　　　　　　　　Variant にしておくのがよい（Stringにはできない）。
+   ' 　　　　　　　　┗『組織略称』は名前付き範囲から変換した 範囲-Range- を代入する。
+   '                範囲なので次元は２で各次元の要素数は不明。また、要素の型も
+   '                Variant としている。
+   ' 動的配列として
+   ' ・Q:範囲の大きさがわかれば、ReDimで明示的に指定してもよい？
+   ' ・A:『範囲のカラム数』や『範囲の行数』は、.Rows.Count などで手に入るが、セルの
+   ' 値を手に入れるのはかなり面倒 （組織略称_S(1, 1) = 組織.Cells(1, 1).Value） で
+   ' ある。そのため推奨される方法ではない。
+   ' （まだこの時点では次元も大きさも未定）としてVariant にしておくのがよい（String
+   ' 　にはできない）
    Dim 組織 As Range
    Set 組織 = ThisWorkbook.Names("組織").RefersToRange
    ' 　┗名前付きの範囲（Named Range）を配列代入可能な範囲-Range- へ変換するメソッド
@@ -69,7 +151,7 @@ Private Sub 組織略称初期化()
    ' 範囲-Range-の　組織　は１列なのだが、代入により生成される配列は１次元配列では
    ' なく、２次元配列になることに注意！！
    Dim m As Long
-   m = UBound(組織略称,1)
+   m = UBound(組織略称, 1)
    Debug.Print m
    '   ┗行方向（１列のみ）の配列なので、第１の次元の上限値を求めておく。
    ' Debug.Print 組織略称.Cells(1, 1)
@@ -83,28 +165,81 @@ Private Sub 組織略称初期化()
    ' ┗『組織』は 範囲-Range- なので .Cell メソッドで行と列によってアクセスする。
    ' 　また、もとの表で何行目であるか（ .Row メソッド ）、などの情報も持っている。
    ' Dim 組織略称ColorIndex(116) As Long
-   Dim 組織略称CI() As Long
+   ' Dim 組織略称CI() As Long
    ReDim 組織略称CI(m)
    '     ┗『組織』としてもっているセルの背景色情報を格納する配列を用意する。
    '       範囲を代入するのではないため、明示的に次元と大きさを指定しなければ
    '       ならない。そこで、動的配列として宣言したあと、組織略称（範囲としての
    '       組織から複製した２次元配列）の行数ぶんの要素を持つ１次元の配列を設定
    '       しておく。
+   ' Dim 組織略称ST() As String
+   ReDim 組織略称ST(m)
+   '
    For r = 1 To m
       組織略称CI(r) = 組織.Cells(r, 1).Interior.ColorIndex
+      組織略称ST(r) = 組織略称(r, 1)
    Next r
    '
    For r = 1 To m
-      Debug.Print 組織略称(r, 1) & ":" & 組織略称CI(r)
+      ' Debug.Print 組織略称(r, 1) & ":" & 組織略称CI(r)
+      ' 組織構成(r) = 組織略称(r, 1)
+      Debug.Print 組織略称ST(r) & ":" & 組織略称CI(r)
    Next r
    '
 End Sub
 
-Sub ■2次元配列再定義()
+Private Sub 組織略称初期化_test()
+   ' Dim 組織略称() As String
+   ' Dim 組織略称() As Variant
+   Dim 組織略称() As Variant
+   Dim 組織略称_S() As String
+   ' Dim 組織略称 As Range
+   Dim 組織 As Range
+   Set 組織 = ThisWorkbook.Names("組織").RefersToRange
+   ' Debug.Print "UBound(組織,1)：" & UBound(組織, 1)
+   ' Debug.Print "UBound(組織,2)：" & UBound(組織, 2)
+   nr = 組織.Rows.count
+   nc = 組織.Columns.count
+   Debug.Print "組織.Rows.count：" & nr
+   Debug.Print "組織.Columns.count：" & nc
+   ReDim 組織略称_S(nr, nc)
+   ' 名前付きの範囲（Named Range）から配列へ：.RefersToRange
+   ' 組織略称 = 組織.Cells(1, 1)
+   組織略称 = 組織
+   組織略称_S(1, 1) = 組織.Cells(1, 1).Value
+   ' 『組織』は１行目からの範囲ではないのだが、『組織略称』の（１）に最初の行が入る
+   m = UBound(組織略称)
+   Debug.Print m
+   ' Debug.Print 組織略称.Cells(1, 1)
+   ' Debug.Print 組織略称(1)
+   ' Debug.Print 組織略称(1).Cells(1, 1)
+   Debug.Print 組織略称(1, 1)
+   Dim b As Long
+   b = 組織.Cells(1, 1).Row
+   Debug.Print b
+   Dim g As Long
+   g = UBound(組織略称, 1)
+   Debug.Print g
+   ' Dim 組織略称ColorIndex(116) As Long
+   Dim 組織略称CI() As Long
+   ReDim 組織略称CI(g)
+   ' ReDim 組織略称ColorIndex(m)
+   For r = 1 To g
+      ' 組織略称CI(r) = 組織.Cells(b + r - 1, 1).Interior.ColorIndex
+      組織略称CI(r) = 組織.Cells(r, 1).Interior.ColorIndex
+   Next r
+   
+   ' For r = 0 To m - 1
+      ' 組織略称ColorIndex(r + 1) = 組織.Cells(b + r, 1).Interior.ColorIndex
+   ' Next r
+   For r = 1 To m
+      ' Debug.Print 組織略称(r) & ":" & 組織略称ColorIndex(r)
+      Debug.Print 組織略称(r, 1) & ":" & 組織略称CI(r)
+   Next r
+End Sub
+
+Private Sub ■2次元配列再定義■実験■()
    ' 最後の次元の定義は増減いずれも変えることができるが、それ以外の次元は変えられない。
-   ' 動的配列として次元も指定せずに宣言したあとに、最初に変数で次元と要素数を指定する
-   ' ときには、任意の大きさに宣言できる。
-   ' 範囲-Range- を 配列 に代入するときはおそらくこれを使っている、のかな。
    Dim a() As Variant
    ReDim Preserve a(3, 3)
    a(2, 2) = 3
@@ -121,6 +256,7 @@ Sub ■2次元配列再定義()
    ReDim Preserve a(3, 2)
    Debug.Print a(2, 2)
 End Sub
+
 
 Function カラムの最終行(n As String, k) As Long
    ' n - 範囲に与えた名前（文字列）
