@@ -46,6 +46,7 @@ Sub 集計名_組織_初期化()
 End Sub
 
 Private Sub 組織略称初期化_改良前()
+   ' 改良前のコードはダサいので消すことにする。
    Dim cc() As Long
    Dim cs() As String
    Dim 組織略称 As Variant
