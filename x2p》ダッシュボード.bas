@@ -45,7 +45,7 @@ Sub 集計名_組織_初期化()
    Call 組織略称初期化
 End Sub
 
-Private Sub 組織略称初期化()
+Private Sub 組織略称初期化_改良前()
    Dim cc() As Long
    Dim cs() As String
    Dim 組織略称 As Variant
@@ -81,6 +81,113 @@ Private Sub 組織略称初期化()
    Next c
    Debug.Print j
    Debug.Print k
+End Sub
+
+Private Sub 組織略称初期化_test()
+   ' Dim 組織略称() As String
+   ' Dim 組織略称() As Variant
+   Dim 組織略称() As Variant
+   ' Dim 組織略称 As Range
+   Dim 組織 As Range
+   Set 組織 = ThisWorkbook.Names("組織").RefersToRange
+   ' 名前付きの範囲（Named Range）から配列へ：.RefersToRange
+   ' 組織略称 = 組織.Cells(1, 1)
+   組織略称 = 組織
+   ' 『組織』は１行目からの範囲ではないのだが、『組織略称』の（１）に最初の行が入る
+   m = UBound(組織略称)
+   Debug.Print m
+   ' Debug.Print 組織略称.Cells(1, 1)
+   ' Debug.Print 組織略称(1)
+   ' Debug.Print 組織略称(1).Cells(1, 1)
+   Debug.Print 組織略称(1, 1)
+   Dim b As Long
+   b = 組織.Cells(1, 1).Row
+   Debug.Print b
+   Dim g As Long
+   g = UBound(組織略称, 1)
+   Debug.Print g
+   ' Dim 組織略称ColorIndex(116) As Long
+   Dim 組織略称CI() As Long
+   ReDim 組織略称CI(g)
+   ' ReDim 組織略称ColorIndex(m)
+   For r = 1 To g
+      ' 組織略称CI(r) = 組織.Cells(b + r - 1, 1).Interior.ColorIndex
+      組織略称CI(r) = 組織.Cells(r, 1).Interior.ColorIndex
+   Next r
+   
+   ' For r = 0 To m - 1
+      ' 組織略称ColorIndex(r + 1) = 組織.Cells(b + r, 1).Interior.ColorIndex
+   ' Next r
+   For r = 1 To m
+      ' Debug.Print 組織略称(r) & ":" & 組織略称ColorIndex(r)
+      Debug.Print 組織略称(r, 1) & ":" & 組織略称CI(r)
+   Next r
+End Sub
+
+Private Sub 組織略称初期化()
+   Dim 組織略称() As Variant
+   ' 　　　　　　　　┗組織略称は名前付き範囲から変換された 範囲-Range- が代入され
+   ' 　　　　　　　　　るので、動的配列（まだこの時点では次元も大きさも未定）として
+   ' 　　　　　　　　　は、Variant にしておかないといけない（Stringにはできない）
+   Dim 組織 As Range
+   Set 組織 = ThisWorkbook.Names("組織").RefersToRange
+   ' 　┗名前付きの範囲（Named Range）から配列へ：.RefersToRange
+   ' 『組織』は１行目からの範囲ではないのだが、『組織略称』の（１）に最初の行が入る。
+   ' たとえばもとのシートの６行目からの範囲であれば、そこ（６行目）へのアクセスは、
+   ' 『組織』の１行目にアクセスすればよい。
+   組織略称 = 組織
+   ' ┗組織略称(i,j) = 組織.Cells(i,j)
+   ' 範囲-Range-の　組織　は１列なのだが、代入により生成される配列は１次元配列では
+   ' なく、２次元配列になることに注意！！
+   Dim m As Long
+   m = UBound(組織略称,1)
+   Debug.Print m
+   '   ┗行方向（１列のみ）の配列なので、第１の次元の上限値を求めておく。
+   ' Debug.Print 組織略称.Cells(1, 1)
+   ' Debug.Print 組織略称(1)
+   ' Debug.Print 組織略称(1).Cells(1, 1)
+   ' ┗『組織略称』は２次元配列である。これらのアクセスのしかたはすべて誤り
+   Debug.Print 組織略称(1, 1)
+   ' Dim b As Long
+   ' b = 組織.Cells(1, 1).Row
+   ' Debug.Print b
+   ' ┗『組織』は 範囲-Range- なので .Cell メソッドで行と列によってアクセスする。
+   ' 　また、もとの表で何行目であるか（ .Row メソッド ）、などの情報も持っている。
+   ' Dim 組織略称ColorIndex(116) As Long
+   Dim 組織略称CI() As Long
+   ReDim 組織略称CI(m)
+   '     ┗『組織』としてもっているセルの背景色情報を格納する配列を用意する。
+   '       範囲を代入するのではないため、明示的に次元と大きさを指定しなければ
+   '       ならない。そこで、動的配列として宣言したあと、組織略称（範囲としての
+   '       組織から複製した２次元配列）の行数ぶんの要素を持つ１次元の配列を設定
+   '       しておく。
+   For r = 1 To m
+      組織略称CI(r) = 組織.Cells(r, 1).Interior.ColorIndex
+   Next r
+   '
+   For r = 1 To m
+      Debug.Print 組織略称(r, 1) & ":" & 組織略称CI(r)
+   Next r
+   '
+End Sub
+
+Sub ■2次元配列再定義()
+   ' 最後の次元の定義は増減いずれも変えることができるが、それ以外の次元は変えられない。
+   Dim a() As Variant
+   ReDim Preserve a(3, 3)
+   a(2, 2) = 3
+   a(3, 3) = 5
+   Debug.Print a(3, 3)
+   ReDim Preserve a(3, 4)
+   a(3, 4) = 7
+   Debug.Print a(3, 4)
+   ' ReDim Preserve a(4, 4)
+   ' a(4, 4) = 11
+   Debug.Print a(3, 3)
+   Debug.Print a(3, 4)
+   ' Debug.Print a(4, 4)
+   ReDim Preserve a(3, 2)
+   Debug.Print a(2, 2)
 End Sub
 
 Function カラムの最終行(n As String, k) As Long
