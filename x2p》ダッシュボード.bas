@@ -45,94 +45,22 @@ Sub 集計名_組織_初期化()
    Call 組織略称初期化
 End Sub
 
-Private Sub 組織略称初期化_改良前()
-   ' 改良前のコードはダサいので消すことにする。
-   Dim cc() As Long
-   Dim cs() As String
-   Dim 組織略称 As Variant
-   Dim 組織 As Range
-   Set 組織 = ThisWorkbook.Names("組織").RefersToRange
-   ' 名前付きの範囲（Named Range）から配列へ：.RefersToRange
-   組織略称 = 組織
-   Dim n As Long
-   Dim m As Long
-   m = UBound(組織略称)
-   Debug.Print m
-   Debug.Print LBound(組織略称)
-   n = 0
-   ' ReDim cc(n)
-   ' ReDim cs(n)
-   Dim i As Long, j As Long, k As Long
-   i = 0
-   j = m ' 最小値が m ということは無いはずなのでシードにする。
-   k = 0
-   For Each c In 組織
-      ' Debug.Print c.Row + 0 & ":" & セルの固定色(c) & ":" & c.Value
-      ' Debug.Print n > c.Row
-      i = c.Row
-      If i < j Then j = i
-      If i > k Then k = i
-      If n < i Then
-         n = n + m
-         ReDim cc(n)
-         ReDim cs(n)
-      End If
-      cc(i) = セルの固定色(c)
-      cs(i) = c.Value
-   Next c
-   Debug.Print j
-   Debug.Print k
-End Sub
-
-Private Sub 組織略称初期化_test()
-   ' Dim 組織略称() As String
-   ' Dim 組織略称() As Variant
-   Dim 組織略称() As Variant
-   ' Dim 組織略称 As Range
-   Dim 組織 As Range
-   Set 組織 = ThisWorkbook.Names("組織").RefersToRange
-   ' 名前付きの範囲（Named Range）から配列へ：.RefersToRange
-   ' 組織略称 = 組織.Cells(1, 1)
-   組織略称 = 組織
-   ' 『組織』は１行目からの範囲ではないのだが、『組織略称』の（１）に最初の行が入る
-   m = UBound(組織略称)
-   Debug.Print m
-   ' Debug.Print 組織略称.Cells(1, 1)
-   ' Debug.Print 組織略称(1)
-   ' Debug.Print 組織略称(1).Cells(1, 1)
-   Debug.Print 組織略称(1, 1)
-   Dim b As Long
-   b = 組織.Cells(1, 1).Row
-   Debug.Print b
-   Dim g As Long
-   g = UBound(組織略称, 1)
-   Debug.Print g
-   ' Dim 組織略称ColorIndex(116) As Long
-   Dim 組織略称CI() As Long
-   ReDim 組織略称CI(g)
-   ' ReDim 組織略称ColorIndex(m)
-   For r = 1 To g
-      ' 組織略称CI(r) = 組織.Cells(b + r - 1, 1).Interior.ColorIndex
-      組織略称CI(r) = 組織.Cells(r, 1).Interior.ColorIndex
-   Next r
-   
-   ' For r = 0 To m - 1
-      ' 組織略称ColorIndex(r + 1) = 組織.Cells(b + r, 1).Interior.ColorIndex
-   ' Next r
-   For r = 1 To m
-      ' Debug.Print 組織略称(r) & ":" & 組織略称ColorIndex(r)
-      Debug.Print 組織略称(r, 1) & ":" & 組織略称CI(r)
-   Next r
-End Sub
-
 Private Sub 組織略称初期化()
    Dim 組織略称() As Variant
-   ' 　　　　　　　　┗組織略称は名前付き範囲から変換された 範囲-Range- が代入され
-   ' 　　　　　　　　　るので、動的配列（まだこの時点では次元も大きさも未定）として
-   ' 　　　　　　　　　は、Variant にしておかないといけない（Stringにはできない）
+   ' 　　　　　　　　┗『組織略称』は名前付き範囲から変換された 範囲-Range- を代入す
+   '                  る。範囲なので次元は２で各次元の要素数は不明。また、要素の型も
+   '                  Variant としている。
+   '                  では、動的配列として
+   '                  ・Q:範囲の大きさがわかれば、ReDimで明示的に指定してもよい？
+   '                  ・A:『範囲のカラム数』や『範囲の行数』は、.Rows.Count などで
+   '                  手に入れることができるが、範囲の値を手に入れるのはかなり面倒
+   '                  である。そのため推奨される方法ではない。
+   '                  （まだこの時点では次元も大きさも未定）として
+   ' 　　　　　　　　　Variant にしておくのがよい（Stringにはできない）。
    Dim 組織 As Range
    Set 組織 = ThisWorkbook.Names("組織").RefersToRange
-   ' 　┗名前付きの範囲（Named Range）から配列へ：.RefersToRange
+   ' 　┗名前付きの範囲（Named Range）を配列代入可能な範囲-Range- へ変換するメソッド
+   '     .RefersToRange
    ' 『組織』は１行目からの範囲ではないのだが、『組織略称』の（１）に最初の行が入る。
    ' たとえばもとのシートの６行目からの範囲であれば、そこ（６行目）へのアクセスは、
    ' 『組織』の１行目にアクセスすればよい。
@@ -174,6 +102,9 @@ End Sub
 
 Sub ■2次元配列再定義()
    ' 最後の次元の定義は増減いずれも変えることができるが、それ以外の次元は変えられない。
+   ' 動的配列として次元も指定せずに宣言したあとに、最初に変数で次元と要素数を指定する
+   ' ときには、任意の大きさに宣言できる。
+   ' 範囲-Range- を 配列 に代入するときはおそらくこれを使っている、のかな。
    Dim a() As Variant
    ReDim Preserve a(3, 3)
    a(2, 2) = 3
