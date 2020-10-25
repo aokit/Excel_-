@@ -27,6 +27,8 @@ Private Sub 集計状況の各範囲の名前定義()
    Call newName2Range(Range("B23"), Range("A23").Value)
 End Sub
 
+' 名前付きの範囲を抽象化して取り扱うためには、まずは、範囲に対する名前定義
+' の変更（名前の付け替え）を備えておきたい。
 Private Sub newName2Range(rng As Range, strName As String)
    '
    ' 名前つきの範囲にあらたな名前を与える
@@ -42,25 +44,74 @@ Private Sub newName2Range(rng As Range, strName As String)
       RefersToLocal:="=" & rng.Address(External:=True)
 End Sub
 
-Private Sub NamedRangeUpdate(strName As String, rng As Range)
+' そもそも、名前付きの領域を名前から得るようにしておくと、名前の付け替え
+' がしやすい。
+Private Sub newName2NamedRange(orgName As String, newName As String)
    '
-   ' 名前つきの範囲を新たな範囲に更新する
+   ' 名前つきの範囲にあらたな名前を与える
    '
-   With ActiveWorkbook
-      .Names.Add Name:=strName, RefersTo:=rng
-   End With
+   Dim aRange As Range
+   On Error Resume Next ' エラーが発生しても次の行から実行.
+   Set aRange = ThisWorkbook.Names(orgName).RefersToRange
+   On Error GoTo 0 ' On Error Resume Next を使用して有効にしたエラー処理を無効にする.
+    
+   If aRange Is Nothing Then
+      Debug.Print "範囲のもとの名前：" & orgName & "　が無いようです。"
+      Exit Sub
+   End If
+   Debug.Print "範囲のもとの名前：" & orgName
+   ThisWorkbook.Names(orgName).Delete
+   ThisWorkbook.Names.Add Name:=newName, RefersTo:=aRange
+   ' ThisWorkbook ではなくて、 aRange.Parent.Parent を使うとよりよい？
    '
-   Dim nm As Name
-   For Each nm In Names
-      If nm = strName Then
-         nm.Parent.Parent.
-      If rng.Address = nm.RefersToRange.Address Then
-         nm.Delete
+End Sub
+
+Sub テスト()
+   ' Call updateRDofNamedRange("集計名と別名", 3, 3)
+   ' Call updateRDofNamedRange("集計名と別名", 0, 2)
+   ' Call updateRDofNamedRange("集計名と別名", 4, 0)
+   ' Call updateRDofNamedRange("集計名と別名", 0, 0)
+   ' Call newName2NamedRange("集計名と別名", "『集計名』と別名")
+   ' Call newName2NamedRange("『集計名』と別名", "集計名と別名")
+   Call 配列からセルへ書き出す■実験■()
+End Sub
+
+' 名前付きの範囲を抽象化して取り扱えると見通しのいい記述ができると思うので
+' これも定義。
+Private Sub updateRDofNamedRange(strName As String, _
+                                 Nrows As Long, _
+                                 Ncolumns As Long)
+   '
+   ' 名前つきの範囲《strName》の右下(RDend)の位置の指定（下図の■）を引数
+   ' 《Nrows》と《Ncolumnss》に更新する。
+   ' ┏…←□→
+   ' ：　　：
+   ' ↑　　↑
+   ' □…←■→
+   ' ↓　　↓
+   ' 左上は基準点で（１，１）となる。
+   ' 上図の■の位置を指定する 《Nrows》と《Ncolumnss》は、
+   ' 負でない整数値であり、 0 は現在の指定を変えないものとして取り扱われる。
+   '
+   Dim aRange As Range
+   Set aRange = ThisWorkbook.Names(strName).RefersToRange
+   Debug.Print "範囲のもとの行数：" & aRange.Rows.count
+   Debug.Print "範囲のもとの列数：" & aRange.Columns.count
+   If Nrows = 0 Then
+      If Ncolumns = 0 Then
+         Exit Sub
+      Else
+         Set aRange = aRange.Resize(, Ncolumns)
       End If
-   Next
-   rng.Parent.Parent.Names.Add _
-      Name:=strName, _
-      RefersToLocal:="=" & rng.Address(External:=True)
+   ElseIf Ncolumns = 0 Then
+      Set aRange = aRange.Resize(Nrows)
+   Else
+      Set aRange = aRange.Resize(Nrows, Ncolumns)
+   End If
+   '
+   Debug.Print "範囲の新たな行数：" & aRange.Rows.count
+   Debug.Print "範囲の新たな列数：" & aRange.Columns.count
+   ThisWorkbook.Names.Add Name:=strName, RefersTo:=aRange
 End Sub
 
 Sub 集計名_組織_初期化()
@@ -111,13 +162,17 @@ Private Sub 配列からセルへ書き出す■実験■()
    Set シートの集計名と別名 = _
        ThisWorkbook.Names(strName).RefersToRange.Resize(4,4)
    '    .Resize(＜行＞,＜列＞) で書き出し範囲を変えられる┛
+   '    （『シートの集計名と別名』という範囲が変わる＜ここでは拡張される＞
+   '    　ので、はみ出した部分を切り落とされることなく書き出せる）
+   '    ただし、これだけではシートに定義された名前も更新されたわけではない。
    '
    シートの集計名と別名 = 集計名と別名
    '
-   With ActiveWorkbook
-      .Names.Add Name:=strName, RefersTo:=シートの集計名と別名
-   End With
-
+   ' 名前をつけた範囲についても更新しておく。
+   ' （もとの名前『strName』に、更新された参照範囲『シートの集計名と別名』を
+   ' 　割り当てることになるので、もとの名前の定義に上書きされる＜別の名前を
+   ' 　つけると、もとの名前も残ってしまう点に注意＞）
+   ActiveWorkbook.Names.Add Name:=strName, RefersTo:=シートの集計名と別名
    '
 End Sub
 
