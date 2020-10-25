@@ -14,17 +14,18 @@ Sub 名前の定義確認の生成()
    Range("B13").Value = "=isref(" & Range("A13").Value & ")"
    Range("B14").Value = "=isref(" & Range("A14").Value & ")"
    Range("B15").Value = "=isref(" & Range("A15").Value & ")"
+   Range("B16").Value = "=isref(" & Range("A16").Value & ")"
    Call 集計状況の各範囲の名前定義
    Call 終了時解放
 End Sub
 
 Private Sub 集計状況の各範囲の名前定義()
-   Call newName2Range(Range("B18"), Range("A18").Value)
-   Call newName2Range(Range("B19"), Range("A19").Value)
    Call newName2Range(Range("B20"), Range("A20").Value)
    Call newName2Range(Range("B21"), Range("A21").Value)
    Call newName2Range(Range("B22"), Range("A22").Value)
    Call newName2Range(Range("B23"), Range("A23").Value)
+   Call newName2Range(Range("B24"), Range("A24").Value)
+   Call newName2Range(Range("B25"), Range("A25").Value)
 End Sub
 
 ' 名前付きの範囲を抽象化して取り扱うためには、まずは、範囲に対する名前定義
@@ -73,7 +74,7 @@ Sub テスト()
    ' Call updateRDofNamedRange("集計名と別名", 0, 0)
    ' Call newName2NamedRange("集計名と別名", "『集計名』と別名")
    ' Call newName2NamedRange("『集計名』と別名", "集計名と別名")
-   Call 配列からセルへ書き出す■実験■()
+   Call 配列からセルへ書き出す■実験■
 End Sub
 
 ' 名前付きの範囲を抽象化して取り扱えると見通しのいい記述ができると思うので
@@ -119,6 +120,9 @@ Sub 集計名_組織_初期化()
 End Sub
 
 Private Sub 組織略称初期化()
+   '
+   Call 組織略称クリア
+   '
    Dim 組織略称CI() As Long
    Dim 組織略称ST() As String
    Call 組織略称読み取り(組織略称CI, 組織略称ST)
@@ -127,7 +131,73 @@ Private Sub 組織略称初期化()
    For r = 1 To m
       Debug.Print 組織略称ST(r) & ":" & 組織略称CI(r)
    Next r
+   Dim 組織構成() As Variant
+   ReDim 組織構成(m, m)
+   Dim i As Long
+   Dim j As Long
+   Dim k As Long
+   Dim RCI As Long
+   i = 0: j = 0: k = 0
+   RCI = 組織略称CI(1)
+   For r = 1 To m
+      If 組織略称CI(r) = RCI Then
+         If k < i Then k = i
+         i = 1
+         j = j + 1
+      Else
+         i = i + 1
+      End If
+      組織構成(j, i) = 組織略称ST(r)
+   Next r
+   ' 組織構成は j 行 k 列の配列ということになる。
+   Dim str組織辞書() As String
+   ReDim str組織辞書(1 To j, 1 To k)
+   For q = 1 To k
+      For p = 1 To j
+         str組織辞書(p, q) = 組織構成(p, q)
+      Next p
+   Next q
+   '
+   Dim strName As String
+   strName = "Range_組織辞書"
+   Dim Range_組織辞書 As Range
+   Set Range_組織辞書 = _
+       ThisWorkbook.Names(strName).RefersToRange.Resize(j, k)
+   '    .Resize(＜行＞,＜列＞) で書き出し範囲を変えられる┛
+   '    （『シートの集計名と別名』という範囲が変わる＜ここでは拡張される＞
+   '    　ので、はみ出した部分を切り落とされることなく書き出せる）
+   '    ただし、これだけではシートに定義された名前も更新されたわけではない。
+   '
+   Range_組織辞書 = str組織辞書
+   '
+   ' 名前をつけた範囲についても更新しておく。
+   ' （もとの名前『strName』に、更新された参照範囲『シートの集計名と別名』を
+   ' 　割り当てることになるので、もとの名前の定義に上書きされる＜別の名前を
+   ' 　つけると、もとの名前も残ってしまう点に注意＞）
+   ActiveWorkbook.Names.Add Name:=strName, RefersTo:=Range_組織辞書
+   '
+   ' 『組織集計』で名前付けされた左上セルから、１列の範囲を生成する。
+   '  Range_組織集計１列
+   ' 『組織集計』
+   strName = "組織集計"
+   Dim Range_組織集計１列 As Range
+   Set Range_組織集計１列 = _
+       ThisWorkbook.Names(strName).RefersToRange.Resize(j, 1)
+   Range_組織集計１列.Clear
+   Range_組織集計１列 = str組織辞書
+   '
 End Sub
+
+Private Sub 組織略称クリア()
+   Dim strName As String
+   strName = "Range_組織辞書"
+   Dim Range_組織辞書 As Range
+   On Error Resume next
+   Set Range_組織辞書 = _
+       ThisWorkbook.Names(strName).RefersToRange.Clear
+   Call updateRDofNamedRange(strName, 1, 1)
+   On Error GoTo 0
+End sub
 
 Private Sub 組織略称構成(組織略称CI() As Long, 組織略称ST() As String)
    Dim 集計名と別名() As String
@@ -139,10 +209,10 @@ Private Sub 組織略称構成(組織略称CI() As Long, 組織略称ST() As String)
    '
 End Sub
 
-Private Sub 配列からセルへ書き出す■実験■()
+Private Sub 配列からセルへ書き出す(strName As String, ByRef 配列() As String)
    '
-   Dim strName As String
-   strName = "集計名と別名"
+   ' Dim strName As String
+   ' strName = "集計名と別名"
    Dim 集計名と別名() As String
    '
    ReDim 集計名と別名(1 To 4, 1 To 4)
@@ -157,10 +227,10 @@ Private Sub 配列からセルへ書き出す■実験■()
    ' 　最初に設定してあっても、書き出す配列の大きさに変更しないと
    ' ・はみ出している範囲は書き出されない
    ' ・不足していると『#N/A』が書き出される
-   ' 
+   '
    Dim シートの集計名と別名 As Range
    Set シートの集計名と別名 = _
-       ThisWorkbook.Names(strName).RefersToRange.Resize(4,4)
+       ThisWorkbook.Names(strName).RefersToRange.Resize(4, 4)
    '    .Resize(＜行＞,＜列＞) で書き出し範囲を変えられる┛
    '    （『シートの集計名と別名』という範囲が変わる＜ここでは拡張される＞
    '    　ので、はみ出した部分を切り落とされることなく書き出せる）
@@ -178,7 +248,7 @@ End Sub
 
 Private Sub 組織略称読み取り(組織略称CI() As Long, 組織略称ST() As String)
    ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
-   ' 『範囲』と名前付けした範囲を読み取り：
+   ' 『組織』と名前付けした範囲を読み取り：
    ' 　１：第１引数として指定した配列に、範囲の ColorIndex をLong型で返す。
    ' 　２：第２引数として指定した配列に、範囲の セルの値 をString型で返す。
    ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
@@ -240,6 +310,35 @@ Private Sub 組織略称読み取り(組織略称CI() As Long, 組織略称ST() As String)
       ' 組織構成(r) = 組織略称(r, 1)
       Debug.Print 組織略称ST(r) & ":" & 組織略称CI(r)
    Next r
+   '
+End Sub
+
+' 未検証
+'
+Private Sub 承認記録読み取り(str_承認記録() As String)
+   '
+   ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+   ' 『承認記録』と名前付けした範囲を読み取り：
+   ' 　引数として指定した配列に、範囲の セルの値 をString型で返す。
+   ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+   '
+   ' 領域の大きさを確認（mr, mc）
+   Dim mr As Long
+   Dim mc As long
+   mr = 列の最終行("承認記録")
+   mc = 行の最終列("承認記録")
+   Dim V_承認記録() As Variant
+   Dim 承認記録 As Range
+   Set 承認記録 = ThisWorkbook.Names("承認記録").RefersToRange.Resize(mr, mc)
+   V_承認記録 = 承認記録
+   ' ┗V_承認記録(i,j) = 承認記録.Cells(i,j)
+   ' Dim str_承認記録 As string
+   ReDim str_承認記録(1 To mr, 1 To mc)
+   For i = 1 To mr
+      For j = 1 To mc
+         str_承認記録(i, j) = V_承認記録(i, j)
+      Next j
+   Next i
    '
 End Sub
 
@@ -312,10 +411,64 @@ Private Sub ■2次元配列再定義■実験■()
    Debug.Print a(2, 2)
 End Sub
 
+Function 列の最終行(n As String, Optional k As Long = 1) As Long
+   ' n - 開始するセル（範囲でもよい）に名付けた名前（文字列）
+   ' k - その範囲の中の列番号（オプション）
+   Dim r1 As Long
+   Dim r2 As Long
+   Dim mr As Long
+   Dim s As Variant
+   Dim R_n As Range
+   Set R_n = ThisWorkbook.Names(n).RefersToRange
+   r1 = R_n.Row
+   mr = Rows.count ' 行の最大値・・・ここで飽和する。
+   Set s = R_n.Columns(k).End(xlDown)
+   r2 = s.Row
+   If r2 = mr Then
+      列の最終行 = r1
+      Exit Function
+   End If
+   Do While Not (r2 = mr)
+      ' Debug.Print s.Value
+      r1 = r2
+      Set s = s.End(xlDown)
+      r2 = s.Row
+   Loop
+   列の最終行 = r1
+End Function
 
-Function カラムの最終行(n As String, k) As Long
+Function 行の最終列(n As String, Optional k As Long = 1) As Long
+   ' n - 開始するセル（範囲でもよい）に名付けた名前（文字列）
+   ' k - その範囲の中の行番号（オプション）
+   Dim c1 As Long
+   Dim c2 As Long
+   Dim mc As Long
+   Dim s As Variant
+   Dim R_n As Range
+   Set R_n = ThisWorkbook.Names(n).RefersToRange
+   c1 = R_n.Column
+   mc = Columns.count ' 行の最大値・・・ここで飽和する。
+   Set s = R_n.Rows(k).End(xlToRight)
+   c2 = s.Column
+   If c2 = mc Then
+      行の最終列 = c1
+      Exit Function
+   End If
+   Do While Not (c2 = mc)
+      ' Debug.Print s.Value
+      c1 = c2
+      Set s = s.End(xlToRight)
+      c2 = s.Column
+   Loop
+   行の最終列 = c1
+End Function
+
+
+
+
+Function 列の最終行(n As String, k) As Long
    ' n - 範囲に与えた名前（文字列）
-   ' k - その範囲の中のカラム番号
+   ' k - その範囲の中の列番号
    Dim r1 As Long
    Dim r2 As Long
    Dim mr As Long
@@ -324,7 +477,7 @@ Function カラムの最終行(n As String, k) As Long
    Set s = Range(n).Columns(k).End(xlDown)
    r1 = s.Row
    If r1 = mr Then
-      カラムの最終行 = 0
+      列の最終行 = r1
       Exit Function
    End If
    Do While Not (r1 = mr)
@@ -333,6 +486,28 @@ Function カラムの最終行(n As String, k) As Long
       Set s = s.End(xlDown)
       r1 = s.Row
    Loop
-   カラムの最終行 = r2
+   列の最終行 = r2
 End Function
 
+Function 行の最終列(n As String, k) As Long
+   ' n - 範囲に与えた名前（文字列）
+   ' k - その範囲の中の行番号
+   Dim c1 As Long
+   Dim c2 As Long
+   Dim mc As Long
+   Dim s As Variant
+   mc = Columns.count
+   Set s = Range(n).Rows(k).End(xlToRight)
+   c1 = s.Column
+   If c1 = mc Then
+      行の最終列 = c1
+      Exit Function
+   End If
+   Do While Not (c1 = mc)
+      ' Debug.Print s.Value
+      c2 = c1
+      Set s = s.End(xlToRight)
+      c1 = s.Column
+   Loop
+   行の最終列 = c2
+End Function
