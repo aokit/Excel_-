@@ -178,26 +178,13 @@ Sub 組織別個別審査集計()
    Call 承認記録読み取り(str承認記録)
    Dim str組織辞書() As String
    Call 組織辞書読み取り(str組織辞書)
-   ' Dim map組織辞書 As Object
-   ' Set map組織辞書 = CreateObject(“Scripting.Dictionary”)
-   Dim map組織辞書 As New Dictionary
-   ' Call convArrayToMap(str組織辞書, map組織辞書)
-   Call 組織辞書構成(str組織辞書, map組織辞書)
-   ' map組織辞書.Add "leaf11", "root1"
-   ' map組織辞書.Add "leaf12", "root1"
-   ' ' map組織辞書.Add "leaf12", "root2"
-   ' map組織辞書.Add "leaf21", "root2"
-   
-   ' Debug.Print map組織辞書.Item("leaf11")
-   ' Debug.Print map組織辞書.Item(map組織辞書.Keys(1))
-   ' Debug.Print map組織辞書.Item("leaf12")
-   
+   Dim dic組織辞書 As New Dictionary
+   Call 組織辞書構成(str組織辞書, dic組織辞書)
    '
    Dim U1 As Long
    Dim 組織別個別審査件数() As Long
    U1 = UBound(str組織辞書, 1)
    ReDim 組織別個別審査件数(1 To U1, 1 To 1)
-   ' Debug.Print (U1)
    '
    Dim 申請者所属 As String
    Dim IX As Long
@@ -209,8 +196,8 @@ Sub 組織別個別審査集計()
          ' 15 - 申請者所属
          ' Debug.Print str承認記録(i, 15)
          申請者所属 = str承認記録(i, 15)
-         If (map組織辞書.Exists(申請者所属)) Then
-            IX = map組織辞書.Item(申請者所属)
+         If (dic組織辞書.Exists(申請者所属)) Then
+            IX = dic組織辞書.Item(申請者所属)
             ' Debug.Print IX
             組織別個別審査件数(IX, 1) = 組織別個別審査件数(IX, 1) + 1
          End If
@@ -219,46 +206,29 @@ Sub 組織別個別審査集計()
    For i = 1 To U1
       Debug.Print 組織別個別審査件数(i, 1)
    Next i
+   Call 組織集計個別審査件数更新(組織別個別審査件数)
 End Sub
 
-Sub 組織辞書構成(str辞書() As String, map辞書 As Dictionary)
+' --- 配列をDictionaryに変換する
+Sub 組織辞書構成(ByRef str辞書() As String, ByRef dic辞書 As Dictionary)
    Dim U1 As Long
    U1 = UBound(str辞書, 1)
    U2 = UBound(str辞書, 2)
    For i = 1 To U1
       d = str辞書(i, 1)
       d0 = i
-      map辞書.Add d, d0
+      dic辞書.Add d, d0
       For j = 2 To U2
          d = str辞書(i, j)
          If d = "" Then Exit For
-         If map辞書.Exists(d) Then
-            MsgBox "key複数所属検出：専用Valueを作りたい"
+         If dic辞書.Exists(d) Then
+            MsgBox "key複数所属検出：再帰的に辞書を生成して格納"
             ' 複数の仕向地などの対応のため
          Else
-            map辞書.Add d, d0
+            dic辞書.Add d, d0
          End If
       Next j
    Next i
-End Sub
-' --- 配列をDictionaryに変換する
-Sub convArrayToMap(ary(), map As Dictionary)
-    Dim iLen    '// 配列要素数
-    Dim i       '// ループカウンタ
-    
-    '// 配列でない場合は処理を抜ける
-    If IsArray(ary) = False Then
-        Exit Sub
-    End If
-    
-    '// 配列要素数を取得
-    iLen = UBound(ary)
-    
-    '// 配列全ループ
-    For i = 0 To iLen
-        '// keyにループカウンタ文字列、valueに配列値を設定
-        Call map.Add(ary(i), CStr(i))
-    Next
 End Sub
 
 Sub 集計名_組織_初期化()
@@ -330,6 +300,7 @@ Private Sub 組織略称初期化()
    Set Range_組織集計1列 = _
        ThisWorkbook.Names(strName).RefersToRange.Resize(j, 1)
    Range_組織集計1列.Clear
+   Range_組織集計1列.Font.Name = "BIZ UDゴシック"
    Range_組織集計1列 = str組織辞書
    '
 End Sub
@@ -343,6 +314,22 @@ Private Sub 組織略称クリア()
        ThisWorkbook.Names(strName).RefersToRange.Clear
    Call updateRDofNamedRange(strName, 1, 1)
    On Error GoTo 0
+End Sub
+
+Private Sub 組織集計個別審査件数更新(ByRef 組織別個別審査件数() As Long)
+   ' 組織集計個別審査件数クリア
+   Dim strName As String
+   strName = "組織集計"
+   Dim R組織集計 As Range
+   Set R組織集計 = ThisWorkbook.Names(strName).RefersToRange
+   r0 = R組織集計.Row
+   r1 = 列の最終行(strName)
+   c0 = R組織集計.Column + 2
+   Dim R組織集計件数列 As Range
+   Set R組織集計件数列 = Range(Cells(r0, c0), Cells(r1, c0))
+   R組織集計件数列.Clear
+   R組織集計件数列.Font.Name = "BIZ UDゴシック"
+   R組織集計件数列 = 組織別個別審査件数
 End Sub
 
 Private Sub 配列からセルへ書き出す(strName As String, ByRef 配列() As String)
@@ -582,5 +569,5 @@ Private Sub ■2次元配列再定義■実験■()
    Debug.Print a(2, 2)
 End Sub
 
-
+' ------END
 
