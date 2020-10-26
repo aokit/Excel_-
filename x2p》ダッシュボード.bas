@@ -3,7 +3,43 @@
 './x2p》ダッシュボード.bas
 
 Sub 名前の定義確認の生成()
+   '
+   ' 集計処理で参照／表示する範囲を指定するために名前付けが済んでいるかの
+   ' チェックリストを生成する。
+   ' 集計処理の結果や状況をまとめて表示する名前付け範囲を生成する。
+   ' 
    Call 開始時抑制
+   Dim BA As Variant
+   Set BA = ActiveSheet.Shapes(Application.Caller)
+   '   ┗関数を起動したボタンのあるセル範囲を確保しておく
+   Dim c1 As Long
+   Dim c2 As Long
+   Dim r As Long
+   Dim r0 As Long
+   Dim rZ As Long
+   ' チェックリスト生成：
+   ' ボタンの左下のセルから名前付けに用意した文字列がセルに格納してあるので
+   ' それらの名前について、範囲が割り当てられているか表示するような式を隣の
+   ' セルに与える。
+   c2 = BA.TopLeftCell.Column
+   c1 = c2 - 1
+   r0 = BA.TopLeftCell.Row + 1
+   rZ = 列の最終行_range(Cells(r0, c1), , 2) ' 最初の空白行の手前の行
+   For r = r0 To rZ
+      Cells(r, c2).Value = "=isref(" & Cells(r, c1).Value & ")"
+   Next r
+   ' 表示のための名前付け範囲生成：
+   ' その下の空白につづいて状況表示用のセルとその名前を配置する。
+   r0 = 列の最終行_range(Cells(rZ, c1), , 2)
+   rZ = 列の最終行_range(Cells(rZ, c1), , 3)
+   For r = r0 To rZ
+      Call newName2Range(Cells(r, c2), Cells(r, c1).Value)
+   Next r
+   Call 終了時解放
+End Sub
+
+Sub unused()
+   ' 範囲の名前付けが行われているかどうか
    Range("B6").Value = "=isref(" & Range("A6").Value & ")"
    Range("B7").Value = "=isref(" & Range("A7").Value & ")"
    Range("B8").Value = "=isref(" & Range("A8").Value & ")"
@@ -15,11 +51,7 @@ Sub 名前の定義確認の生成()
    Range("B14").Value = "=isref(" & Range("A14").Value & ")"
    Range("B15").Value = "=isref(" & Range("A15").Value & ")"
    Range("B16").Value = "=isref(" & Range("A16").Value & ")"
-   Call 集計状況の各範囲の名前定義
-   Call 終了時解放
-End Sub
-
-Private Sub 集計状況の各範囲の名前定義()
+   ' 集計状況の各範囲の名前定義
    Call newName2Range(Range("B20"), Range("A20").Value)
    Call newName2Range(Range("B21"), Range("A21").Value)
    Call newName2Range(Range("B22"), Range("A22").Value)
@@ -30,9 +62,14 @@ End Sub
 
 ' 名前付きの範囲を抽象化して取り扱うためには、まずは、範囲に対する名前定義
 ' の変更（名前の付け替え）を備えておきたい。
+' そもそも、名前付きの領域を名前から得るようにしておくと、名前の付け替え
+' がしやすい。
+' 変数とワークシートの入出力は名前をつけたセルの範囲を使って実現する。
+'
 Private Sub newName2Range(rng As Range, strName As String)
    '
-   ' 名前つきの範囲にあらたな名前を与える
+   ' 範囲に名前を与える。名前を手がかりにつかわない。
+   ' もし名前がついていたら古い名前は消去する。
    '
    Dim nm As Name
    For Each nm In Names
@@ -45,11 +82,11 @@ Private Sub newName2Range(rng As Range, strName As String)
       RefersToLocal:="=" & rng.Address(External:=True)
 End Sub
 
-' そもそも、名前付きの領域を名前から得るようにしておくと、名前の付け替え
-' がしやすい。
 Private Sub newName2NamedRange(orgName As String, newName As String)
    '
-   ' 名前つきの範囲にあらたな名前を与える
+   ' 名前つきの範囲にあらたな名前を与える。
+   ' すでに名前がついている範囲を名前で指定して、
+   ' 新しい名前を与え、古い名前は消去する。
    '
    Dim aRange As Range
    On Error Resume Next ' エラーが発生しても次の行から実行.
@@ -65,16 +102,6 @@ Private Sub newName2NamedRange(orgName As String, newName As String)
    ThisWorkbook.Names.Add Name:=newName, RefersTo:=aRange
    ' ThisWorkbook ではなくて、 aRange.Parent.Parent を使うとよりよい？
    '
-End Sub
-
-Sub テスト()
-   ' Call updateRDofNamedRange("集計名と別名", 3, 3)
-   ' Call updateRDofNamedRange("集計名と別名", 0, 2)
-   ' Call updateRDofNamedRange("集計名と別名", 4, 0)
-   ' Call updateRDofNamedRange("集計名と別名", 0, 0)
-   ' Call newName2NamedRange("集計名と別名", "『集計名』と別名")
-   ' Call newName2NamedRange("『集計名』と別名", "集計名と別名")
-   Call 配列からセルへ書き出す■実験■
 End Sub
 
 ' 名前付きの範囲を抽象化して取り扱えると見通しのいい記述ができると思うので
@@ -113,6 +140,20 @@ Private Sub updateRDofNamedRange(strName As String, _
    Debug.Print "範囲の新たな行数：" & aRange.Rows.count
    Debug.Print "範囲の新たな列数：" & aRange.Columns.count
    ThisWorkbook.Names.Add Name:=strName, RefersTo:=aRange
+End Sub
+
+Sub テスト()
+   ' Call updateRDofNamedRange("集計名と別名", 3, 3)
+   ' Call updateRDofNamedRange("集計名と別名", 0, 2)
+   ' Call updateRDofNamedRange("集計名と別名", 4, 0)
+   ' Call updateRDofNamedRange("集計名と別名", 0, 0)
+   ' Call newName2NamedRange("集計名と別名", "『集計名』と別名")
+   ' Call newName2NamedRange("『集計名』と別名", "集計名と別名")
+   ' Call 配列からセルへ書き出す■実験■
+   Dim str_承認記録() As String
+   Call 承認記録読み取り(str_承認記録)
+   Debug.Print str_承認記録(1, 1)
+   Debug.Print str_承認記録(240, 1)
 End Sub
 
 Sub 集計名_組織_初期化()
@@ -180,11 +221,11 @@ Private Sub 組織略称初期化()
    '  Range_組織集計１列
    ' 『組織集計』
    strName = "組織集計"
-   Dim Range_組織集計１列 As Range
-   Set Range_組織集計１列 = _
+   Dim Range_組織集計1列 As Range
+   Set Range_組織集計1列 = _
        ThisWorkbook.Names(strName).RefersToRange.Resize(j, 1)
-   Range_組織集計１列.Clear
-   Range_組織集計１列 = str組織辞書
+   Range_組織集計1列.Clear
+   Range_組織集計1列 = str組織辞書
    '
 End Sub
 
@@ -192,21 +233,11 @@ Private Sub 組織略称クリア()
    Dim strName As String
    strName = "Range_組織辞書"
    Dim Range_組織辞書 As Range
-   On Error Resume next
+   On Error Resume Next
    Set Range_組織辞書 = _
        ThisWorkbook.Names(strName).RefersToRange.Clear
    Call updateRDofNamedRange(strName, 1, 1)
    On Error GoTo 0
-End sub
-
-Private Sub 組織略称構成(組織略称CI() As Long, 組織略称ST() As String)
-   Dim 集計名と別名() As String
-   '
-   Dim シートの集計名と別名 As Range
-   Set シートの集計名と別名 = ThisWorkbook.Names("集計名と別名").RefersToRange
-   '
-   シートの集計名と別名 = 集計名と別名
-   '
 End Sub
 
 Private Sub 配列からセルへ書き出す(strName As String, ByRef 配列() As String)
@@ -313,8 +344,6 @@ Private Sub 組織略称読み取り(組織略称CI() As Long, 組織略称ST() As String)
    '
 End Sub
 
-' 未検証
-'
 Private Sub 承認記録読み取り(str_承認記録() As String)
    '
    ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
@@ -324,7 +353,7 @@ Private Sub 承認記録読み取り(str_承認記録() As String)
    '
    ' 領域の大きさを確認（mr, mc）
    Dim mr As Long
-   Dim mc As long
+   Dim mc As Long
    mr = 列の最終行("承認記録")
    mc = 行の最終列("承認記録")
    Dim V_承認記録() As Variant
@@ -342,7 +371,7 @@ Private Sub 承認記録読み取り(str_承認記録() As String)
    '
 End Sub
 
-Private Sub 組織略称初期化_test()
+Private Sub 組織略称初期化_■test■()
    ' Dim 組織略称() As String
    ' Dim 組織略称() As Variant
    Dim 組織略称() As Variant
@@ -411,103 +440,3 @@ Private Sub ■2次元配列再定義■実験■()
    Debug.Print a(2, 2)
 End Sub
 
-Function 列の最終行(n As String, Optional k As Long = 1) As Long
-   ' n - 開始するセル（範囲でもよい）に名付けた名前（文字列）
-   ' k - その範囲の中の列番号（オプション）
-   Dim r1 As Long
-   Dim r2 As Long
-   Dim mr As Long
-   Dim s As Variant
-   Dim R_n As Range
-   Set R_n = ThisWorkbook.Names(n).RefersToRange
-   r1 = R_n.Row
-   mr = Rows.count ' 行の最大値・・・ここで飽和する。
-   Set s = R_n.Columns(k).End(xlDown)
-   r2 = s.Row
-   If r2 = mr Then
-      列の最終行 = r1
-      Exit Function
-   End If
-   Do While Not (r2 = mr)
-      ' Debug.Print s.Value
-      r1 = r2
-      Set s = s.End(xlDown)
-      r2 = s.Row
-   Loop
-   列の最終行 = r1
-End Function
-
-Function 行の最終列(n As String, Optional k As Long = 1) As Long
-   ' n - 開始するセル（範囲でもよい）に名付けた名前（文字列）
-   ' k - その範囲の中の行番号（オプション）
-   Dim c1 As Long
-   Dim c2 As Long
-   Dim mc As Long
-   Dim s As Variant
-   Dim R_n As Range
-   Set R_n = ThisWorkbook.Names(n).RefersToRange
-   c1 = R_n.Column
-   mc = Columns.count ' 行の最大値・・・ここで飽和する。
-   Set s = R_n.Rows(k).End(xlToRight)
-   c2 = s.Column
-   If c2 = mc Then
-      行の最終列 = c1
-      Exit Function
-   End If
-   Do While Not (c2 = mc)
-      ' Debug.Print s.Value
-      c1 = c2
-      Set s = s.End(xlToRight)
-      c2 = s.Column
-   Loop
-   行の最終列 = c1
-End Function
-
-
-
-
-Function 列の最終行(n As String, k) As Long
-   ' n - 範囲に与えた名前（文字列）
-   ' k - その範囲の中の列番号
-   Dim r1 As Long
-   Dim r2 As Long
-   Dim mr As Long
-   Dim s As Variant
-   mr = Rows.count
-   Set s = Range(n).Columns(k).End(xlDown)
-   r1 = s.Row
-   If r1 = mr Then
-      列の最終行 = r1
-      Exit Function
-   End If
-   Do While Not (r1 = mr)
-      ' Debug.Print s.Value
-      r2 = r1
-      Set s = s.End(xlDown)
-      r1 = s.Row
-   Loop
-   列の最終行 = r2
-End Function
-
-Function 行の最終列(n As String, k) As Long
-   ' n - 範囲に与えた名前（文字列）
-   ' k - その範囲の中の行番号
-   Dim c1 As Long
-   Dim c2 As Long
-   Dim mc As Long
-   Dim s As Variant
-   mc = Columns.count
-   Set s = Range(n).Rows(k).End(xlToRight)
-   c1 = s.Column
-   If c1 = mc Then
-      行の最終列 = c1
-      Exit Function
-   End If
-   Do While Not (c1 = mc)
-      ' Debug.Print s.Value
-      c2 = c1
-      Set s = s.End(xlToRight)
-      c1 = s.Column
-   Loop
-   行の最終列 = c2
-End Function

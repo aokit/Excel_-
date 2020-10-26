@@ -36,54 +36,109 @@ Public Sub 終了時解放()
 　　Application.ScreenUpdating = True '画面描画を開始
 End Sub
 
-Function 列の最終行(n As String, Optional k As Long = 1) As Long
+Function 列の最終行(n As String, _
+                          Optional k As Long = 1, _
+                          Optional q As Long = 0) As Long
    ' n - 開始するセル（範囲でもよい）に名付けた名前（文字列）
-   ' k - その範囲の中の列番号（オプション）
+   ' k - ＜オプション＞その範囲の中の列番号
+   ' q - ＜オプション＞何回目の空白を終わりとみなすか：0だと無制限
+   Dim R_n As Range
+   Set R_n = ThisWorkbook.Names(n).RefersToRange
+   If IsMissing(k) Then
+      If IsMissing(q) Then
+         列の最終行 = 列の最終行_range(R_n)
+      Else
+         列の最終行 = 列の最終行_range(R_n,,q)
+      End If
+   Else
+      If IsMissing(q) Then
+         列の最終行 = 列の最終行_range(R_n,k)
+      Else
+         列の最終行 = 列の最終行_range(R_n,k,q)
+      End If
+   End if
+End Function
+
+Function 行の最終列(n As String, _
+                          Optional k As Long = 1, _
+                          Optional q As Long = 0) As Long
+   ' n - 開始するセル（範囲でもよい）に名付けた名前（文字列）
+   ' k - ＜オプション＞その範囲の中の行番号
+   ' q - ＜オプション＞何回目の空白を終わりとみなすか：0だと無制限
+   Dim R_n As Range
+   Set R_n = ThisWorkbook.Names(n).RefersToRange
+   If IsMissing(k) Then
+      If IsMissing(q) Then
+         行の最終列 = 行の最終列_range(R_n)
+      Else
+         行の最終列 = 行の最終列_range(R_n,,q)
+      End If
+   Else
+      If IsMissing(q) Then
+         行の最終列 = 行の最終列_range(R_n,k)
+      Else
+         行の最終列 = 行の最終列_range(R_n,k,q)
+      End If
+   End if
+End Function
+
+Function 列の最終行_range(R_n As Range, _
+                          Optional k As Long = 1, _
+                          Optional q As Long = 0) As Long
+   ' R_n - 開始するセルを含む範囲-Range-
+   ' k - ＜オプション＞その範囲の中の列番号
+   ' q - ＜オプション＞何回目の空白を終わりとみなすか：0だと無制限
    Dim r1 As Long
    Dim r2 As Long
    Dim mr As Long
    Dim s As Variant
-   Dim R_n As Range
-   Set R_n = ThisWorkbook.Names(n).RefersToRange
    r1 = R_n.Row
    mr = Rows.count ' 行の最大値・・・ここで飽和する。
    Set s = R_n.Columns(k).End(xlDown)
    r2 = s.Row
-   If r2 = mr Then
-      列の最終行 = r1
+   q = q -1
+   If (r2 = mr) Or (q = 0) Then
+      列の最終行_range = r1
       Exit Function
    End If
-   Do While Not (r2 = mr)
+   Do While Not ((r2 = mr) Or (q = 0))
       ' Debug.Print s.Value
       r1 = r2
       Set s = s.End(xlDown)
       r2 = s.Row
+      q = q -1
    Loop
-   列の最終行 = r1
+   列の最終行_range = r1
 End Function
 
-Function 行の最終列(n As String, Optional k As Long = 1) As Long
-   ' n - 開始するセル（範囲でもよい）に名付けた名前（文字列）
-   ' k - その範囲の中の行番号（オプション）
+Function 行の最終列_range(R_n As Range, _
+                          Optional k As Long = 1, _
+                          Optional q As Long = 0) As Long
+   ' R_n - 開始するセルを含む範囲-Range-
+   ' k - ＜オプション＞その範囲の中の行番号
+   ' q - ＜オプション＞何回目の空白を終わりとみなすか：0だと無制限
    Dim c1 As Long
    Dim c2 As Long
    Dim mc As Long
    Dim s As Variant
-   Dim R_n As Range
-   Set R_n = ThisWorkbook.Names(n).RefersToRange
    c1 = R_n.Column
-   mc = Columns.count ' 行の最大値・・・ここで飽和する。
+   mc = Columns.count ' 列の最大値・・・ここで飽和する。
    Set s = R_n.Rows(k).End(xlToRight)
    c2 = s.Column
-   If c2 = mc Then
-      行の最終列 = c1
+   q = q -1
+   If (c2 = mc) Or (q = 0) Then
+      行の最終列_range = c1
       Exit Function
    End If
-   Do While Not (c2 = mc)
+   Do While Not ((c2 = mc) Or (q = 0))
       ' Debug.Print s.Value
       c1 = c2
       Set s = s.End(xlToRight)
       c2 = s.Column
+      q = q - 1
    Loop
-   行の最終列 = c1
+   行の最終列_range = c1
 End Function
+
+
+
