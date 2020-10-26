@@ -7,7 +7,7 @@ Sub 名前の定義確認の生成()
    ' 集計処理で参照／表示する範囲を指定するために名前付けが済んでいるかの
    ' チェックリストを生成する。
    ' 集計処理の結果や状況をまとめて表示する名前付け範囲を生成する。
-   ' 
+   '
    Call 開始時抑制
    Dim BA As Variant
    Set BA = ActiveSheet.Shapes(Application.Caller)
@@ -142,6 +142,23 @@ Private Sub updateRDofNamedRange(strName As String, _
    ThisWorkbook.Names.Add Name:=strName, RefersTo:=aRange
 End Sub
 
+Function p有効期間(strDate As String, _
+                    Optional R_n As String = "集計期間") As Boolean
+   Dim r As Boolean
+   Dim r1 As Boolean
+   Dim r2 As Boolean
+   Dim strD As String
+   Dim strD1 As String
+   Dim strD2 As String
+   strD = CDate(strDate)
+   strD1 = CDate(ThisWorkbook.Names(R_n).RefersToRange.Cells(1, 1))
+   strD2 = CDate(ThisWorkbook.Names(R_n).RefersToRange.Cells(2, 1))
+   r1 = (0 <= DateDiff("d", strD1, strD))
+   r2 = (0 <= DateDiff("d", strD, strD2))
+   r = r1 And r2
+   p有効期間 = r
+End Function
+
 Sub テスト()
    ' Call updateRDofNamedRange("集計名と別名", 3, 3)
    ' Call updateRDofNamedRange("集計名と別名", 0, 2)
@@ -152,8 +169,96 @@ Sub テスト()
    ' Call 配列からセルへ書き出す■実験■
    Dim str_承認記録() As String
    Call 承認記録読み取り(str_承認記録)
-   Debug.Print str_承認記録(1, 1)
-   Debug.Print str_承認記録(240, 1)
+   ' Debug.Print str_承認記録(1, 1)
+   ' Debug.Print str_承認記録(240, 1)
+End Sub
+
+Sub 組織別個別審査集計()
+   Dim str承認記録() As String
+   Call 承認記録読み取り(str承認記録)
+   Dim str組織辞書() As String
+   Call 組織辞書読み取り(str組織辞書)
+   ' Dim map組織辞書 As Object
+   ' Set map組織辞書 = CreateObject(“Scripting.Dictionary”)
+   Dim map組織辞書 As New Dictionary
+   ' Call convArrayToMap(str組織辞書, map組織辞書)
+   Call 組織辞書構成(str組織辞書, map組織辞書)
+   ' map組織辞書.Add "leaf11", "root1"
+   ' map組織辞書.Add "leaf12", "root1"
+   ' ' map組織辞書.Add "leaf12", "root2"
+   ' map組織辞書.Add "leaf21", "root2"
+   
+   ' Debug.Print map組織辞書.Item("leaf11")
+   ' Debug.Print map組織辞書.Item(map組織辞書.Keys(1))
+   ' Debug.Print map組織辞書.Item("leaf12")
+   
+   '
+   Dim U1 As Long
+   Dim 組織別個別審査件数() As Long
+   U1 = UBound(str組織辞書, 1)
+   ReDim 組織別個別審査件数(1 To U1, 1 To 1)
+   ' Debug.Print (U1)
+   '
+   Dim 申請者所属 As String
+   Dim IX As Long
+   Dim U2 As Long
+   U2 = UBound(str承認記録, 1)
+   For i = 2 To U2
+      ' Debug.Print str承認記録(i, 2)
+      If p有効期間(str承認記録(i, 2)) Then
+         ' 15 - 申請者所属
+         ' Debug.Print str承認記録(i, 15)
+         申請者所属 = str承認記録(i, 15)
+         If (map組織辞書.Exists(申請者所属)) Then
+            IX = map組織辞書.Item(申請者所属)
+            ' Debug.Print IX
+            組織別個別審査件数(IX, 1) = 組織別個別審査件数(IX, 1) + 1
+         End If
+      End If
+   Next i
+   For i = 1 To U1
+      Debug.Print 組織別個別審査件数(i, 1)
+   Next i
+End Sub
+
+Sub 組織辞書構成(str辞書() As String, map辞書 As Dictionary)
+   Dim U1 As Long
+   U1 = UBound(str辞書, 1)
+   U2 = UBound(str辞書, 2)
+   For i = 1 To U1
+      d = str辞書(i, 1)
+      d0 = i
+      map辞書.Add d, d0
+      For j = 2 To U2
+         d = str辞書(i, j)
+         If d = "" Then Exit For
+         If map辞書.Exists(d) Then
+            MsgBox "key複数所属検出：専用Valueを作りたい"
+            ' 複数の仕向地などの対応のため
+         Else
+            map辞書.Add d, d0
+         End If
+      Next j
+   Next i
+End Sub
+' --- 配列をDictionaryに変換する
+Sub convArrayToMap(ary(), map As Dictionary)
+    Dim iLen    '// 配列要素数
+    Dim i       '// ループカウンタ
+    
+    '// 配列でない場合は処理を抜ける
+    If IsArray(ary) = False Then
+        Exit Sub
+    End If
+    
+    '// 配列要素数を取得
+    iLen = UBound(ary)
+    
+    '// 配列全ループ
+    For i = 0 To iLen
+        '// keyにループカウンタ文字列、valueに配列値を設定
+        Call map.Add(ary(i), CStr(i))
+    Next
 End Sub
 
 Sub 集計名_組織_初期化()
@@ -344,6 +449,43 @@ Private Sub 組織略称読み取り(組織略称CI() As Long, 組織略称ST() As String)
    '
 End Sub
 
+Private Sub 組織辞書読み取り(str組織辞書() As String)
+   '
+   ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+   ' 『Range_組織辞書』と名前付けした範囲を読み取り：
+   ' 　引数として指定した配列に、範囲の セルの値 をString型で返す。
+   ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+   '
+   ' 組織辞書のシートは手作業での追記も想定されている。そのため
+   ' 領域の大きさを確認（wr, wc）する必要があるので確認。
+   Dim strName As String
+   strName = "Range_組織辞書"
+   Dim r0 As Long
+   Dim c0 As Long
+   Dim rZ As Long
+   Dim cZ As Long
+   Dim wr As Long
+   Dim wc As Long
+   Dim R組織辞書 As Range
+   Set R組織辞書 = ThisWorkbook.Names(strName).RefersToRange
+   r0 = R組織辞書.Row
+   c0 = R組織辞書.Column
+   rZ = 列の最終行(strName)
+   cZ = 行の最終列(strName)
+   wr = rZ - r0 + 1
+   wc = cZ - c0 + 1
+   Set R組織辞書 = R組織辞書.Resize(wr, wc)
+   Dim V組織辞書() As Variant
+   V組織辞書 = R組織辞書
+   ' 引数として返す配列の大きさをここで設定
+   ReDim str組織辞書(1 To wr, 1 To wc)
+   For i = 1 To wr
+      For j = 1 To wc
+         str組織辞書(i, j) = V組織辞書(i, j)
+      Next j
+   Next i
+End Sub
+
 Private Sub 承認記録読み取り(str_承認記録() As String)
    '
    ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
@@ -439,4 +581,6 @@ Private Sub ■2次元配列再定義■実験■()
    ReDim Preserve a(3, 2)
    Debug.Print a(2, 2)
 End Sub
+
+
 

@@ -173,3 +173,9 @@ For Each c In ThisWorkbook.Names("組織").RefersToRange
 関数定義のなかで返す値の代入先とすべき関数名そのもののつづり間違い
 があることが多い。
 ＝＝＝＝
+
+Dictionary を使うことにしたので、
+VBE の ツール の 参照設定… の Microsoft Scripting Runtime にチェックを入れ
+有効にした。
+
+
