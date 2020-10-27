@@ -473,6 +473,7 @@ Function MultiHomeDict(ByRef strHomeMember() As String) As Dictionary
             strValue(0 + 1) = d
             dictMH.Add c, strValue
          End If
+         Erase strValue
       Next j
    Next i
    MultiHomeDict = dictMH
