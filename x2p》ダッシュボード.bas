@@ -436,6 +436,48 @@ Private Sub 組織略称読み取り(組織略称CI() As Long, 組織略称ST() As String)
    '
 End Sub
 
+Function MultiHomeDict(strHomeMember() As String) As Dictionary
+   '
+   ' 各行の第１列に Home が記載され、第２列以降にその Home に属する Member が
+   ' あれば、所定の個数ぶん記載されている不定長の行をあつめた（配列としては最長
+   ' の行を格納できる列数の）1..N 行 1..M 列の配列である strHomeMember を引数
+   ' とし、
+   ' Member を key として Home を Value とする辞書を構成して返す関数。
+   ' 実際には、Home が単一のときには、ただ一つの要素を持つ配列が Value となる
+   ' 配列である。つまり、ある Member が 複数の Home に記載されている場合には、
+   ' その Member を Key としてアクセスすると 複数の Home を要素として持つ配列
+   ' が、 Value となる。
+   '
+   Dim dictMH As New Dictionary
+   Dim strValue() As String
+   ' ReDim strValue(1 To UBound(strHomeMember,1)) ' Homeの種類数が最大要素
+   Dim k As Long
+   Dim i As Long
+   Dim j As Long
+   Dim c As String
+   Dim d As String
+   For i = 1 To UBound(strHomeMember, 1)
+      d = strHomeMember(i, 1)
+      For j = 1 To UBound(strHomeMember, 2)
+         c = strHomeMember(i, j)
+         If c = "" Then Exit For
+         If dictMH.Exists(c) Then
+            strValue = dictMH.Item(c) ' 大きさのわからない配列が値
+            k = UBound(strValue, 1)
+            ReDim Preserve strValue(1 To k + 1)
+            strValue(k + 1) = d
+            dictMH.Item(c) = strValue
+         Else
+            ReDim strValue(1 To 1)
+            strValue(0 + 1) = d
+            dictMH.Add c, strValue
+         End If
+      Next j
+   Next i
+   MultiHomeDict = dictMH
+   '
+End Function
+
 Private Sub 組織辞書読み取り(str組織辞書() As String)
    '
    ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
@@ -570,4 +612,6 @@ Private Sub ■2次元配列再定義■実験■()
 End Sub
 
 ' ------END
+
+
 
