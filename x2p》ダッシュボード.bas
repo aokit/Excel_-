@@ -436,7 +436,7 @@ Private Sub 組織略称読み取り(組織略称CI() As Long, 組織略称ST() As String)
    '
 End Sub
 
-Function MultiHomeDict(strHomeMember() As String) As Dictionary
+Function MultiHomeDict(ByRef strHomeMember() As String) As Dictionary
    '
    ' 各行の第１列に Home が記載され、第２列以降にその Home に属する Member が
    ' あれば、所定の個数ぶん記載されている不定長の行をあつめた（配列としては最長
@@ -449,7 +449,7 @@ Function MultiHomeDict(strHomeMember() As String) As Dictionary
    ' が、 Value となる。
    '
    Dim dictMH As New Dictionary
-   Dim strValue() As String
+   ' Dim strValue() As String
    ' ReDim strValue(1 To UBound(strHomeMember,1)) ' Homeの種類数が最大要素
    Dim k As Long
    Dim i As Long
@@ -461,6 +461,7 @@ Function MultiHomeDict(strHomeMember() As String) As Dictionary
       For j = 1 To UBound(strHomeMember, 2)
          c = strHomeMember(i, j)
          If c = "" Then Exit For
+         Dim strValue() As String
          If dictMH.Exists(c) Then
             strValue = dictMH.Item(c) ' 大きさのわからない配列が値
             k = UBound(strValue, 1)
