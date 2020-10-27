@@ -461,7 +461,7 @@ Function MultiHomeDict(ByRef strHomeMember() As String) As Dictionary
       For j = 1 To UBound(strHomeMember, 2)
          c = strHomeMember(i, j)
          If c = "" Then Exit For
-         Dim strValue() As String
+         Dim strValue() As String ' 再定義ができるかどうか
          If dictMH.Exists(c) Then
             strValue = dictMH.Item(c) ' 大きさのわからない配列が値
             k = UBound(strValue, 1)
@@ -479,7 +479,17 @@ Function MultiHomeDict(ByRef strHomeMember() As String) As Dictionary
    '
 End Function
 
-Private Sub 組織辞書読み取り(str組織辞書() As String)
+Function Extent1arr(RyRef strValue() As String, c As String) As Variant
+   Dim xstrValue() As String
+   Dim U As Long
+   U = UBound(strValue,1)
+   ReDim xstrValue(1 To (U + 1))
+   xstrValue(U + 1) = c
+   Extent1arr = xstrValue
+End function
+
+
+Private Sub 組織辞書読み取り(ByRef str組織辞書() As String)
    '
    ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
    ' 『Range_組織辞書』と名前付けした範囲を読み取り：
