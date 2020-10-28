@@ -436,6 +436,30 @@ Private Sub 組織略称読み取り(組織略称CI() As Long, 組織略称ST() As String)
    '
 End Sub
 
+Sub テストMultiHomeDict()
+   Dim strD() As String
+   ReDim strD(1 To 4, 1 To 4)
+   strD(1, 1) = "A"
+   strD(2, 1) = "B"
+   strD(3, 1) = "C"
+   strD(4, 1) = "D"
+   '
+   strD(2, 2) = "B2"
+   strD(2, 3) = "23or32"
+   strD(2, 4) = "B4"
+   '
+   strD(3, 2) = "23or32"
+   strD(3, 3) = "C3"
+   '
+   strD(4, 2) = "D2"
+   '
+   Dim dictMH As New Dictionary
+   ' dictMH = MultiHomeDict(strD)
+   Set dictMH = MultiHomeDict(strD)
+   Debug.Print dictMH.Item("23or32")
+   '
+End Sub
+
 Function MultiHomeDict(ByRef strHomeMember() As String) As Dictionary
    '
    ' 各行の第１列に Home が記載され、第２列以降にその Home に属する Member が
@@ -476,18 +500,19 @@ Function MultiHomeDict(ByRef strHomeMember() As String) As Dictionary
          Erase strValue
       Next j
    Next i
-   MultiHomeDict = dictMH
+   ' MultiHomeDict = dictMH
+   Set MultiHomeDict = dictMH
    '
 End Function
 
-Function Extent1arr(RyRef strValue() As String, c As String) As Variant
+Function Extent1arr(ByRef strValue() As String, c As String) As Variant
    Dim xstrValue() As String
    Dim U As Long
-   U = UBound(strValue,1)
+   U = UBound(strValue, 1)
    ReDim xstrValue(1 To (U + 1))
    xstrValue(U + 1) = c
    Extent1arr = xstrValue
-End function
+End Function
 
 
 Private Sub 組織辞書読み取り(ByRef str組織辞書() As String)
@@ -624,6 +649,8 @@ Private Sub ■2次元配列再定義■実験■()
 End Sub
 
 ' ------END
+
+
 
 
 
