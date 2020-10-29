@@ -456,7 +456,12 @@ Sub テストMultiHomeDict()
    Dim dictMH As New Dictionary
    ' dictMH = MultiHomeDict(strD)
    Set dictMH = MultiHomeDict(strD)
-   Debug.Print dictMH.Item("23or32")
+   ' 2
+   Dim aryVal() As String
+   Debug.Print dictMH.Item("23or32")(2)
+   aryVal = dictMH.Item("23or32")
+   Debug.Print UBound(aryVal, 1)
+   Erase aryVal
    '
 End Sub
 
@@ -649,6 +654,7 @@ Private Sub ■2次元配列再定義■実験■()
 End Sub
 
 ' ------END
+
 
 
 
