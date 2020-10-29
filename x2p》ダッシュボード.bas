@@ -232,10 +232,25 @@ Sub 組織辞書構成(ByRef str辞書() As String, ByRef dic辞書 As Dictionary)
 End Sub
 
 Sub 集計名_組織_初期化()
-   Call 組織略称初期化
+   ' Call 組織略称初期化
 End Sub
 
-Private Sub 組織略称初期化()
+Sub 組織辞書初期化()
+   '
+   ' 組織表（名前『組織』で定義した範囲-Range-　いまのところ、
+   ' 組織名称・略称・英文呼称のシートにある）の表記内容に従って
+   ' 名前『Range_組織辞書』で定義した範囲に組織辞書を展開する。
+   ' 名前『Range_組織辞書』で定義した範囲は最初は左上となる１セルだけであるが
+   ' 初期化によって、必要な大きさの範囲に書き換えられる。
+   ' 名前『Range_組織辞書』で定義した範囲を組織の辞書として使う
+   ' ・組織集計の第１列、集計名を初期化するとき
+   ' ・同第３列、件数を集計するとき
+   '
+   ' なお初期化で生成される組織辞書は初期値であって、書き換えることが想定されて
+   ' いる。ただし、直接セルを書き換えることは想定しない。Range_組織辞書（範囲）
+   ' の更新、途中に空白がない、多重帰属がない、などの整合性を維持したり、操作の
+   ' 利便性（２セルの選択とボタンクリックで登録）のために別途プロシジャを用意す
+   ' る予定。
    '
    Call 組織略称クリア
    '
@@ -292,15 +307,33 @@ Private Sub 組織略称初期化()
    ' 　つけると、もとの名前も残ってしまう点に注意＞）
    ActiveWorkbook.Names.Add Name:=strName, RefersTo:=Range_組織辞書
    '
-   ' 『組織集計』で名前付けされた左上セルから、１列の範囲を生成する。
-   '  Range_組織集計１列
-   ' 『組織集計』
+End Sub
+
+Sub 組織集計1列初期化()
+   '
+   ' 名前『Range_組織辞書』で名付けた範囲に組織辞書にもとづいて、
+   ' 名前『組織集計』で名付けた範囲（集計名の左上セルから必要な行数の１列の
+   ' 範囲を生成する。
+   '
+   ' 名前『組織集計』で名付けた範囲をもとに
+   ' 名前『Range_組織集計１列』で名付けた範囲を構成する。
+   '
+   Dim strName As String
+   strName = "Range_組織辞書"
+   Dim Range_組織辞書 As Range
+   Set Range_組織辞書 = _
+       ThisWorkbook.Names(strName).RefersToRange
+   Dim str組織辞書() As Variant
+   str組織辞書 = Range_組織辞書.Value
+   Dim j As Long
+   j = UBound(str組織辞書, 1)
    strName = "組織集計"
    Dim Range_組織集計1列 As Range
    Set Range_組織集計1列 = _
        ThisWorkbook.Names(strName).RefersToRange.Resize(j, 1)
    Range_組織集計1列.Clear
    Range_組織集計1列.Font.Name = "BIZ UDゴシック"
+   ' Range_組織集計1列.Value = str組織辞書
    Range_組織集計1列 = str組織辞書
    '
 End Sub
@@ -331,6 +364,121 @@ Private Sub 組織集計個別審査件数更新(ByRef 組織別個別審査件数() As Long)
    R組織集計件数列.Font.Name = "BIZ UDゴシック"
    R組織集計件数列 = 組織別個別審査件数
 End Sub
+
+Function 組織集計名() As String
+   '
+   ' 『組織集計』で名付けた範囲から　集計名　を取り出して配列として返す
+   ' 　文字列と数値が混在しているが、ひとまず文字列として読む。
+   '
+   Dim strName As String
+   strName = "組織集計"
+   Dim R集計名1 As Range
+   Set R集計名1 = ThisWorkbook.Names(strName).RefersToRange
+   r0 = R集計名1.Row
+   c0 = R集計名1.Column
+   r1 = 列の最終行(strName)
+   c1 = c0 + 2
+   ' ┗・・・年間登録件数と個別審査件数の欄まで拡張
+   Set R集計名1 = Range(Cells(r0, c0), Cells(r1, c1))
+   Dim str集計名() As String
+   str集計名 = R集計名1
+   組織集計名 = str集計名()
+   ' ┗・・・配列を関数の返す値にするときには『()』が必要
+   '
+End Function
+
+Sub 組織集計_非ゼロ抽出(ByRef 組織集計_非ゼロ() As Variant)
+   '
+   ' 『組織集計』で名付けた範囲を件数を含むように拡張し、件数が０でない
+   ' 　行で構成された配列を返す
+   ' ▼引数に参照で返す。
+   ' ▼文字列ではなく数値として返したい場合もあるので引数は Variant とした。
+   '
+   Dim strName As String
+   strName = "組織集計"
+   Dim R組織集計 As Range
+   Set R組織集計 = ThisWorkbook.Names(strName).RefersToRange
+   r0 = R組織集計.Row
+   c0 = R組織集計.Column
+   r1 = 列の最終行(strName)
+   c1 = c0 + 2
+   ' ┗・・・年間登録件数と個別審査件数の欄まで拡張
+   ' Dim strCV() As String
+   ' strCV = Range(Cells(r0, c0), Cells(r1, c1)).Value
+   Dim strCV() As Variant
+   Set R組織集計 = Range(Cells(r0, c0), Cells(r1, c1))
+   strCV = R組織集計.Value
+   Dim strNZ() As String
+   ReDim strNZ(1 To (UBound(strCV, 1) - LBound(strCV, 1) + 1), 1 To 3)
+   j = 0
+   For i = LBound(strCV, 1) To UBound(strCV, 1)
+      If (Val(strCV(i, LBound(strCV, 2) + 1)) > 0) _
+            Or (Val(strCV(i, LBound(strCV, 2) + 2)) > 0) Then
+         j = j + 1
+         strNZ(j, 1) = strCV(i, LBound(strCV, 2))
+         strNZ(j, 2) = strCV(i, LBound(strCV, 2) + 1)
+         strNZ(j, 3) = strCV(i, LBound(strCV, 2) + 2)
+      End If
+   Next i
+   Dim NZC() As Variant
+   ReDim NZC(1 To j, 1 To 3)
+   For i = 1 To j
+      NZC(i, 1) = strNZ(i, 1)
+      NZC(i, 2) = Val(strNZ(i, 2))
+      NZC(i, 3) = Val(strNZ(i, 3))
+   Next i
+   組織集計_非ゼロ = NZC
+   '
+End Sub
+
+Private Sub 組織集計_非ゼロ書出(ByRef 組織集計_非ゼロ() As Variant)
+   '
+   ' 配列『組織集計＿非ゼロ』（文字列の配列）を受け取って書き出す。
+   ' 引数である配列は、その要素が文字列ではなくて数値の場合にも同様
+   ' に機能してほしいことから、Variant とした。
+   '
+   Dim strName As String
+   strName = "組織集計"
+   r1 = 列の最終行(strName)
+   ' ┗・・・全集計名の最後の行数を得る
+   strName = "組織集計＿非ゼロ"
+   Dim R組織集計_非ゼロ As Range
+   Set R組織集計_非ゼロ = ThisWorkbook.Names(strName).RefersToRange
+   r0 = R組織集計_非ゼロ.Row
+   c0 = R組織集計_非ゼロ.Column
+   c1 = c0 + 2
+   ' ┗・・・年間登録件数と個別審査件数の欄まで拡張
+   Set R組織集計_非ゼロ = Range(Cells(r0, c0), Cells(r1, c1))
+   R組織集計_非ゼロ.Clear
+   R組織集計_非ゼロ.Font.Name = "BIZ UDゴシック"
+   ' ┗・・・消すのはこの領域の最大の行数
+   '
+   r1 = UBound(組織集計_非ゼロ, 1) - LBound(組織集計_非ゼロ, 1) + r0
+   Set R組織集計_非ゼロ = Range(Cells(r0, c0), Cells(r1, c1))
+   R組織集計_非ゼロ = 組織集計_非ゼロ
+   ' ┗・・・書き出すのは行列の行数だけ
+End Sub
+
+Sub 組織集計_非ゼロ更新()
+   Dim 組織集計_非ゼロ() As Variant
+   ' ┗・・・連絡用の配列は、文字列以外も渡せるように Variant としておく。
+   '
+   ReDim 組織集計_非ゼロ(1 To 3, 1 To 3)
+   組織集計_非ゼロ(1, 1) = "AA"
+   組織集計_非ゼロ(1, 2) = "AB"
+   組織集計_非ゼロ(1, 3) = "AC"
+   組織集計_非ゼロ(2, 1) = "BA"
+   組織集計_非ゼロ(2, 2) = "BB"
+   組織集計_非ゼロ(2, 3) = "BC"
+   組織集計_非ゼロ(3, 1) = "CA"
+   組織集計_非ゼロ(3, 2) = "CB"
+   組織集計_非ゼロ(3, 3) = "CC"
+   '
+   ' Set 組織集計_非ゼロ = 組織集計_非ゼロ抽出()
+   Call 組織集計_非ゼロ抽出(組織集計_非ゼロ)
+   Call 組織集計_非ゼロ書出(組織集計_非ゼロ)
+End Sub
+
 
 Private Sub 配列からセルへ書き出す(strName As String, ByRef 配列() As String)
    '
@@ -654,6 +802,11 @@ Private Sub ■2次元配列再定義■実験■()
 End Sub
 
 ' ------END
+
+
+
+
+
 
 
 
