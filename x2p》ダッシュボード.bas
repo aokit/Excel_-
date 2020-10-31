@@ -317,6 +317,84 @@ Private Sub 組織略称読み取り(ByRef 組織略称CI() As Long, _
    Call Col2CIonST("組織",組織略称CI(), 組織略称ST())
 End Sub
 
+' 組織辞書初期化のなかで str組織辞書 を生成するために呼ぶ
+' 
+Private Sub CIonST2Arr(ByRef CI() As Long, _
+                       ByRef ST() As String, _
+                       ByRef strArr() As String)
+   Dim m As Long
+   m = UBound(ST,1)
+   For r = 1 To m
+      ' Debug.Print ST(r) & ":" & CI(r)
+   Next r
+   Dim varArr() As Variant
+   ReDim varArr(m, m)
+   '     ┗varArrの列がとりうる最大は m 行がとりうる最大は m である。
+   '     （ここで定義するとき 0 行 や 0 列 があるが使わず参照もしない）
+   Dim i As Long
+   Dim j As Long
+   Dim k As Long
+   Dim RCI As Long
+   i = 0: j = 0: k = 0
+   RCI = CI(1)
+   '┗・・・第１行の色を上位組織の判定基準として使う rootCI
+   For r = 1 To m
+      If CI(r) = RCI Then
+         If k < i Then k = i
+         i = 1
+         j = j + 1
+      Else
+         i = i + 1
+      End If
+      varArr(j, i) = ST(r)
+   Next r
+   ' varArrは j 行 k 列の配列ということになる。
+   ReDim strArr(1 To j, 1 To k)
+   For q = 1 To k
+      For p = 1 To j
+         strArr(p, q) = varArr(p, q)
+      Next p
+   Next q
+End Sub
+   
+' 組織辞書初期化のなかで str組織辞書 を書き出すために呼ぶ
+'
+   '    .Resize(＜行＞,＜列＞) で書き出し範囲を変えられる┛
+   '    （『シートの集計名と別名』という範囲が変わる＜ここでは拡張される＞
+   '    　ので、はみ出した部分を切り落とされることなく書き出せる）
+   '    ただし、これだけではシートに定義された名前も更新されたわけではない。
+   '
+   ' 名前をつけた範囲についても更新しておく。
+   ' （もとの名前『strName』に、更新された参照範囲『シートの集計名と別名』を
+   ' 　割り当てることになるので、もとの名前の定義に上書きされる＜別の名前を
+   ' 　つけると、もとの名前も残ってしまう点に注意＞）
+   '
+Private Sub Arr2ReNamedRange(ByRef strArr() As String, _
+                             strName As String)
+   '
+   ' <1 to UBound(strArr,1)> x <1 to UBound(strArr,2)>  の大きさを持つ
+   ' 配列 strArr を
+   ' strName で名付けた範囲に書き出す。
+   ' 範囲の大きさは、 strArr に合わせて拡縮（再設定）される。
+   ' さらに、名付けも拡縮された範囲に再設定される。
+   ' Spillに類似機能を一般的に使えるプロシジャ
+   '
+   Dim j As Long
+   Dim k As Long
+   j = UBound(strArr, 1)
+   k = UBound(strArr, 2)
+   Dim R_n As Range
+   Set R_n = _
+       ThisWorkbook.Names(strName).RefersToRange.Resize(j, k)
+   '    ただし、これだけではシートに定義された名前も更新されたわけではない。
+   '
+   R_n = strArr
+   '
+   ' 名前をつけた範囲についても更新しておく。
+   ActiveWorkbook.Names.Add Name:=strName, RefersTo:=R_n
+   '
+End Sub
+
 Sub 組織辞書初期化()
    '
    ' 組織表（名前『組織』で定義した範囲-Range-　いまのところ、
@@ -338,57 +416,14 @@ Sub 組織辞書初期化()
    '
    Dim 組織略称CI() As Long
    Dim 組織略称ST() As String
-   Call 組織略称読み取り(組織略称CI, 組織略称ST)
-   Dim m As Long
-   m = UBound(組織略称ST)
-   For r = 1 To m
-      ' Debug.Print 組織略称ST(r) & ":" & 組織略称CI(r)
-   Next r
-   Dim 組織構成() As Variant
-   ReDim 組織構成(m, m)
-   Dim i As Long
-   Dim j As Long
-   Dim k As Long
-   Dim RCI As Long
-   i = 0: j = 0: k = 0
-   RCI = 組織略称CI(1)
-   '┗・・・組織略称の第１行の色を上位組織の判定基準として使う
-   For r = 1 To m
-      If 組織略称CI(r) = RCI Then
-         If k < i Then k = i
-         i = 1
-         j = j + 1
-      Else
-         i = i + 1
-      End If
-      組織構成(j, i) = 組織略称ST(r)
-   Next r
-   ' 組織構成は j 行 k 列の配列ということになる。
+   Call 組織略称読み取り(組織略称CI(), 組織略称ST())
+   '
    Dim str組織辞書() As String
-   ReDim str組織辞書(1 To j, 1 To k)
-   For q = 1 To k
-      For p = 1 To j
-         str組織辞書(p, q) = 組織構成(p, q)
-      Next p
-   Next q
+   Call CIonST2Arr(組織略称CI(), 組織略称ST(), str組織辞書())
    '
    Dim strName As String
    strName = "Range_組織辞書"
-   Dim Range_組織辞書 As Range
-   Set Range_組織辞書 = _
-       ThisWorkbook.Names(strName).RefersToRange.Resize(j, k)
-   '    .Resize(＜行＞,＜列＞) で書き出し範囲を変えられる┛
-   '    （『シートの集計名と別名』という範囲が変わる＜ここでは拡張される＞
-   '    　ので、はみ出した部分を切り落とされることなく書き出せる）
-   '    ただし、これだけではシートに定義された名前も更新されたわけではない。
-   '
-   Range_組織辞書 = str組織辞書
-   '
-   ' 名前をつけた範囲についても更新しておく。
-   ' （もとの名前『strName』に、更新された参照範囲『シートの集計名と別名』を
-   ' 　割り当てることになるので、もとの名前の定義に上書きされる＜別の名前を
-   ' 　つけると、もとの名前も残ってしまう点に注意＞）
-   ActiveWorkbook.Names.Add Name:=strName, RefersTo:=Range_組織辞書
+   Call Arr2ReNamedRange(str組織辞書(), strName)
    '
 End Sub
 
