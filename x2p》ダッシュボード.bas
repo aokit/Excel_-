@@ -38,28 +38,6 @@ Sub 名前の定義確認の生成()
    Call 終了時解放
 End Sub
 
-Sub unused()
-   ' 範囲の名前付けが行われているかどうか
-   Range("B6").Value = "=isref(" & Range("A6").Value & ")"
-   Range("B7").Value = "=isref(" & Range("A7").Value & ")"
-   Range("B8").Value = "=isref(" & Range("A8").Value & ")"
-   Range("B9").Value = "=isref(" & Range("A9").Value & ")"
-   Range("B10").Value = "=isref(" & Range("A10").Value & ")"
-   Range("B11").Value = "=isref(" & Range("A11").Value & ")"
-   Range("B12").Value = "=isref(" & Range("A12").Value & ")"
-   Range("B13").Value = "=isref(" & Range("A13").Value & ")"
-   Range("B14").Value = "=isref(" & Range("A14").Value & ")"
-   Range("B15").Value = "=isref(" & Range("A15").Value & ")"
-   Range("B16").Value = "=isref(" & Range("A16").Value & ")"
-   ' 集計状況の各範囲の名前定義
-   Call newName2Range(Range("B20"), Range("A20").Value)
-   Call newName2Range(Range("B21"), Range("A21").Value)
-   Call newName2Range(Range("B22"), Range("A22").Value)
-   Call newName2Range(Range("B23"), Range("A23").Value)
-   Call newName2Range(Range("B24"), Range("A24").Value)
-   Call newName2Range(Range("B25"), Range("A25").Value)
-End Sub
-
 ' 名前付きの範囲を抽象化して取り扱うためには、まずは、範囲に対する名前定義
 ' の変更（名前の付け替え）を備えておきたい。
 ' そもそも、名前付きの領域を名前から得るようにしておくと、名前の付け替え
@@ -142,8 +120,15 @@ Private Sub updateRDofNamedRange(strName As String, _
    ThisWorkbook.Names.Add Name:=strName, RefersTo:=aRange
 End Sub
 
+' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+'
 Function p有効期間(strDate As String, _
-                    Optional R_n As String = "集計期間") As Boolean
+                   Optional R_n As String = "集計期間") As Boolean
+   '
+   ' 『集計期間』と名付けられた２セルの列から期間の開始日と終了日を得て
+   '  strDate がその期間に含まれている場合には True を返す。そうでない
+   '  なら False を返す。
+   '
    Dim r As Boolean
    Dim r1 As Boolean
    Dim r2 As Boolean
@@ -159,21 +144,43 @@ Function p有効期間(strDate As String, _
    p有効期間 = r
 End Function
 
-Sub テスト()
-   ' Call updateRDofNamedRange("集計名と別名", 3, 3)
-   ' Call updateRDofNamedRange("集計名と別名", 0, 2)
-   ' Call updateRDofNamedRange("集計名と別名", 4, 0)
-   ' Call updateRDofNamedRange("集計名と別名", 0, 0)
-   ' Call newName2NamedRange("集計名と別名", "『集計名』と別名")
-   ' Call newName2NamedRange("『集計名』と別名", "集計名と別名")
-   ' Call 配列からセルへ書き出す■実験■
-   Dim str_承認記録() As String
-   Call 承認記録読み取り(str_承認記録)
-   ' Debug.Print str_承認記録(1, 1)
-   ' Debug.Print str_承認記録(240, 1)
+' --- 配列をDictionaryに変換する
+' 上位組織を先頭として、その組織に帰属する下位組織を以降に並べた行を
+' 上位組織の数だけならべた配列を
+' 下位組織を key とし、上位組織を Value とする辞書に変換する。
+' 複数帰属（同じ下位組織が複数の上位組織に所属する。
+' 結果、key が複数の Value を持つ）はないものとする。
+' 
+Sub SingleHomeDict(ByRef str辞書() As String, _
+                   ByRef dic辞書 As Dictionary)
+    '
+    ' 『str辞書()』
+    '  上位組織を先頭として、その組織に帰属する下位組織を以降に並べた行を
+    '  上位組織の数だけならべた配列
+    ' 『dic辞書』
+    '  下位組織を key とし、上位組織を Value とする辞書
+    '
+   Dim U1 As Long
+   U1 = UBound(str辞書, 1)
+   U2 = UBound(str辞書, 2)
+   For i = 1 To U1
+      d = str辞書(i, 1)
+      d0 = i
+      dic辞書.Add d, d0
+      For j = 2 To U2
+         d = str辞書(i, j)
+         If d = "" Then Exit For
+         If dic辞書.Exists(d) Then
+            MsgBox "key複数所属検出：再帰的に辞書を生成して格納"
+            ' 複数の仕向地などの対応のため
+         Else
+            dic辞書.Add d, d0
+         End If
+      Next j
+   Next i
 End Sub
 
-Sub 組織別個別審査集計()
+Sub 組織別個別審査件数集計()
    Dim str承認記録() As String
    Call 承認記録読み取り(str承認記録)
    Dim str組織辞書() As String
@@ -209,30 +216,105 @@ Sub 組織別個別審査集計()
    Call 組織集計個別審査件数更新(組織別個別審査件数)
 End Sub
 
-' --- 配列をDictionaryに変換する
 Sub 組織辞書構成(ByRef str辞書() As String, ByRef dic辞書 As Dictionary)
-   Dim U1 As Long
-   U1 = UBound(str辞書, 1)
-   U2 = UBound(str辞書, 2)
-   For i = 1 To U1
-      d = str辞書(i, 1)
-      d0 = i
-      dic辞書.Add d, d0
-      For j = 2 To U2
-         d = str辞書(i, j)
-         If d = "" Then Exit For
-         If dic辞書.Exists(d) Then
-            MsgBox "key複数所属検出：再帰的に辞書を生成して格納"
-            ' 複数の仕向地などの対応のため
-         Else
-            dic辞書.Add d, d0
-         End If
-      Next j
-   Next i
+   Call SingleHomeDict(str辞書(), dic辞書)
 End Sub
 
 Sub 集計名_組織_初期化()
    ' Call 組織略称初期化
+End Sub
+
+Private Sub Col2CIonST(strName As String, _
+                       ByRef CI() As Long, _
+                       ByRef ST() As String)
+   ' 『組織』と名前付けした範囲を読み取り：
+   ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+   ' １：第１引数の文字列で名付けられた範囲（１列×複数行）を読み取り
+   ' ２：第２引数として指定した配列に、範囲の ColorIndex をLong型で返す。
+   ' ３：第３引数として指定した配列に、範囲の セルの値 をString型で返す。
+   ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+   '
+   Dim rngC As Range
+   Set rngC = ThisWorkbook.Names(strName).RefersToRange
+   ' 　┗名前付きの範囲（Named Range）を配列代入可能な範囲-Range- へ変換するメソッド
+   '     .RefersToRange
+   ' 第１引数の文字列（たとえば『組織』）は任意のセル範囲であり、もとのシートの１行目
+   ' からの範囲ではないのだが、aryC(1) に最初の行が入る。
+   ' たとえばもとのシートの６行目からの範囲であれば、そこ（６行目）へのアクセスは、
+   ' 『組織』の１行目にアクセスすればよい。
+   Call Col2CIonSTrng(rngC, CI() ,ST())
+   '                  ┗与えた範囲（列）の背景色と内容をそれぞれ１列の配列に得る。
+End Sub
+
+Private Sub Col2CIonSTrng(rngC As Range, _
+                       ByRef CI() As Long, _
+                       ByRef ST() As String)
+   ' 『組織』と名前付けした範囲を読み取り：
+   ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+   ' １：第１引数＜rngC＞が示す範囲（１列×複数行）を読み取り
+   ' ２：第２引数＜CI()＞として指定した配列に、範囲の ColorIndex をLong型で返す。
+   ' ３：第３引数＜ST()＞として指定した配列に、範囲の セルの値 をString型で返す。
+   ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+   '
+   Dim aryC() As Variant
+   ' 　┗第１引数の文字列で名付けられた範囲のセルの値を格納する配列。範囲由来の
+   '     配列なので次元は２。各次元の要素数は範囲に依存するので不明。要素数を
+   '     ReDim などで明示的に指定する扱いはしない。※
+   '     要素の型はVariant としている。
+   ' ※動的配列として
+   ' ・Q:範囲の大きさがわかれば、ReDimで明示的に指定してもよい？
+   ' ・A:『範囲のカラム数』や『範囲の行数』は、.Rows.Count などで手に入るが、セルの
+   ' 値を手に入れるのはかなり面倒 （組織略称_S(1, 1) = 組織.Cells(1, 1).Value） で
+   ' ある。そのため推奨される方法ではない。
+   ' （まだこの時点では次元も大きさも未定）としてVariant にしておくのがよい（String
+   ' 　にはできない）
+   aryC = rngC.Value
+   ' ┗組織略称(i,j) = 組織.Cells(i,j)
+   ' 範囲-Range-の　組織　は１列なのだが、代入により生成される配列は１次元配列では
+   ' なく、２次元配列になることに注意！！
+   Dim m As Long
+   m = UBound(aryC, 1)
+   ' Debug.Print LBound(aryC, 1)
+   '   ┗範囲から読み込んだ配列（aryC = rngC.Value）なので　aryC(1,1)　が左上の
+   '   　（最初の）セルの値の入る要素になる。
+   '     ※　(0,0)ではない
+   ' Debug.Print m
+   '   ┗行方向（１列のみ）の配列なので、第１の次元の上限値を求めておく。
+   ' Debug.Print aryC.Cells(1, 1)
+   ' Debug.Print aryC(1)
+   ' Debug.Print aryC(1).Cells(1, 1)
+   '   ┗『aryC』は２次元配列である。これらのアクセスのしかたはすべて誤り
+   ' Debug.Print aryC(1, 1)
+   '   ┗範囲の左上の（最初の）セルの値が入っていることを確認できる。
+   ' Dim b As Long
+   ' b = rngC.Cells(1, 1).Row
+   ' Debug.Print b
+   ' ┗『rngC』は 範囲-Range- なので .Cell メソッドで行と列によってアクセスする。
+   ' 　また、もとの表で何行目であるか（ .Row メソッド ）、などの情報も持っている。
+   ReDim CI(m)
+   '     ┗『rngC』としてもっているセルの背景色情報を格納する配列を用意する。
+   '       範囲を代入するのではないため、明示的に次元と大きさを指定しなければ
+   '       ならない。そこで、動的配列として宣言したあと、組織略称（範囲としての
+   '       組織から複製した２次元配列）の行数ぶんの要素を持つ１次元の配列を設定
+   '       しておく。
+   ReDim ST(m)
+   '     ┗『aryC』としてもっているセルの値を格納する配列を用意する。
+   '
+   For r = 1 To m
+      CI(r) = rngC.Cells(r, 1).Interior.ColorIndex
+      ST(r) = aryC(r, 1)
+   Next r
+   '
+End Sub
+
+Private Sub 組織略称読み取り(ByRef 組織略称CI() As Long, _
+                             ByRef 組織略称ST() As String)
+   ' 『組織』と名前付けた範囲（１列×複数行）を読み取り：
+   ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+   ' １：第１引数として指定した配列に、範囲の ColorIndex をLong型で返す。
+   ' ２：第２引数として指定した配列に、範囲の セルの値 をString型で返す。
+   ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+   Call Col2CIonST("組織",組織略称CI(), 組織略称ST())
 End Sub
 
 Sub 組織辞書初期化()
@@ -260,7 +342,7 @@ Sub 組織辞書初期化()
    Dim m As Long
    m = UBound(組織略称ST)
    For r = 1 To m
-      Debug.Print 組織略称ST(r) & ":" & 組織略称CI(r)
+      ' Debug.Print 組織略称ST(r) & ":" & 組織略称CI(r)
    Next r
    Dim 組織構成() As Variant
    ReDim 組織構成(m, m)
@@ -270,6 +352,7 @@ Sub 組織辞書初期化()
    Dim RCI As Long
    i = 0: j = 0: k = 0
    RCI = 組織略称CI(1)
+   '┗・・・組織略称の第１行の色を上位組織の判定基準として使う
    For r = 1 To m
       If 組織略称CI(r) = RCI Then
          If k < i Then k = i
@@ -308,6 +391,7 @@ Sub 組織辞書初期化()
    ActiveWorkbook.Names.Add Name:=strName, RefersTo:=Range_組織辞書
    '
 End Sub
+
 
 Sub 組織集計1列初期化()
    '
@@ -517,72 +601,6 @@ Private Sub 配列からセルへ書き出す(strName As String, ByRef 配列() As String)
    '
 End Sub
 
-Private Sub 組織略称読み取り(組織略称CI() As Long, 組織略称ST() As String)
-   ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
-   ' 『組織』と名前付けした範囲を読み取り：
-   ' 　１：第１引数として指定した配列に、範囲の ColorIndex をLong型で返す。
-   ' 　２：第２引数として指定した配列に、範囲の セルの値 をString型で返す。
-   ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
-   '
-   Dim 組織略称() As Variant
-   ' 　　　　　　　　┗『組織略称』は名前付き範囲から変換した 範囲-Range- を代入する。
-   '                範囲なので次元は２で各次元の要素数は不明。また、要素の型も
-   '                Variant としている。
-   ' 動的配列として
-   ' ・Q:範囲の大きさがわかれば、ReDimで明示的に指定してもよい？
-   ' ・A:『範囲のカラム数』や『範囲の行数』は、.Rows.Count などで手に入るが、セルの
-   ' 値を手に入れるのはかなり面倒 （組織略称_S(1, 1) = 組織.Cells(1, 1).Value） で
-   ' ある。そのため推奨される方法ではない。
-   ' （まだこの時点では次元も大きさも未定）としてVariant にしておくのがよい（String
-   ' 　にはできない）
-   Dim 組織 As Range
-   Set 組織 = ThisWorkbook.Names("組織").RefersToRange
-   ' 　┗名前付きの範囲（Named Range）を配列代入可能な範囲-Range- へ変換するメソッド
-   '     .RefersToRange
-   ' 『組織』は１行目からの範囲ではないのだが、『組織略称』の（１）に最初の行が入る。
-   ' たとえばもとのシートの６行目からの範囲であれば、そこ（６行目）へのアクセスは、
-   ' 『組織』の１行目にアクセスすればよい。
-   組織略称 = 組織
-   ' ┗組織略称(i,j) = 組織.Cells(i,j)
-   ' 範囲-Range-の　組織　は１列なのだが、代入により生成される配列は１次元配列では
-   ' なく、２次元配列になることに注意！！
-   Dim m As Long
-   m = UBound(組織略称, 1)
-   Debug.Print m
-   '   ┗行方向（１列のみ）の配列なので、第１の次元の上限値を求めておく。
-   ' Debug.Print 組織略称.Cells(1, 1)
-   ' Debug.Print 組織略称(1)
-   ' Debug.Print 組織略称(1).Cells(1, 1)
-   ' ┗『組織略称』は２次元配列である。これらのアクセスのしかたはすべて誤り
-   Debug.Print 組織略称(1, 1)
-   ' Dim b As Long
-   ' b = 組織.Cells(1, 1).Row
-   ' Debug.Print b
-   ' ┗『組織』は 範囲-Range- なので .Cell メソッドで行と列によってアクセスする。
-   ' 　また、もとの表で何行目であるか（ .Row メソッド ）、などの情報も持っている。
-   ' Dim 組織略称ColorIndex(116) As Long
-   ' Dim 組織略称CI() As Long
-   ReDim 組織略称CI(m)
-   '     ┗『組織』としてもっているセルの背景色情報を格納する配列を用意する。
-   '       範囲を代入するのではないため、明示的に次元と大きさを指定しなければ
-   '       ならない。そこで、動的配列として宣言したあと、組織略称（範囲としての
-   '       組織から複製した２次元配列）の行数ぶんの要素を持つ１次元の配列を設定
-   '       しておく。
-   ' Dim 組織略称ST() As String
-   ReDim 組織略称ST(m)
-   '
-   For r = 1 To m
-      組織略称CI(r) = 組織.Cells(r, 1).Interior.ColorIndex
-      組織略称ST(r) = 組織略称(r, 1)
-   Next r
-   '
-   For r = 1 To m
-      ' Debug.Print 組織略称(r, 1) & ":" & 組織略称CI(r)
-      ' 組織構成(r) = 組織略称(r, 1)
-      Debug.Print 組織略称ST(r) & ":" & 組織略称CI(r)
-   Next r
-   '
-End Sub
 
 Sub テストMultiHomeDict()
    Dim strD() As String
@@ -778,7 +796,8 @@ Private Sub 組織略称初期化_■test■()
    ' Next r
    For r = 1 To m
       ' Debug.Print 組織略称(r) & ":" & 組織略称ColorIndex(r)
-      Debug.Print 組織略称(r, 1) & ":" & 組織略称CI(r)
+      ' ┗　これは２次元配列になっていないので間違い
+      ' Debug.Print 組織略称(r, 1) & ":" & 組織略称CI(r)
    Next r
 End Sub
 
@@ -802,14 +821,4 @@ Private Sub ■2次元配列再定義■実験■()
 End Sub
 
 ' ------END
-
-
-
-
-
-
-
-
-
-
 
