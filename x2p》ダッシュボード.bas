@@ -16,7 +16,7 @@ Sub 名前の定義確認の生成()
    Dim c2 As Long
    Dim r As Long
    Dim r0 As Long
-   Dim rZ As Long
+   Dim rz As Long
    ' チェックリスト生成：
    ' ボタンの左下のセルから名前付けに用意した文字列がセルに格納してあるので
    ' それらの名前について、範囲が割り当てられているか表示するような式を隣の
@@ -24,15 +24,15 @@ Sub 名前の定義確認の生成()
    c2 = BA.TopLeftCell.Column
    c1 = c2 - 1
    r0 = BA.TopLeftCell.Row + 1
-   rZ = 列の最終行_range(Cells(r0, c1), , 2) ' 最初の空白行の手前の行
-   For r = r0 To rZ
+   rz = 列の最終行_range(Cells(r0, c1), , 2) ' 最初の空白行の手前の行
+   For r = r0 To rz
       Cells(r, c2).Value = "=isref(" & Cells(r, c1).Value & ")"
    Next r
    ' 表示のための名前付け範囲生成：
    ' その下の空白につづいて状況表示用のセルとその名前を配置する。
-   r0 = 列の最終行_range(Cells(rZ, c1), , 2)
-   rZ = 列の最終行_range(Cells(rZ, c1), , 3)
-   For r = r0 To rZ
+   r0 = 列の最終行_range(Cells(rz, c1), , 2)
+   rz = 列の最終行_range(Cells(rz, c1), , 3)
+   For r = r0 To rz
       Call newName2Range(Cells(r, c2), Cells(r, c1).Value)
    Next r
    Call 終了時解放
@@ -130,7 +130,7 @@ Function p有効期間(strDate As String, _
    '  なら False を返す。
    '
    Dim r As Boolean
-   Dim r1 As Boolean
+   Dim R1 As Boolean
    Dim r2 As Boolean
    Dim strD As String
    Dim strD1 As String
@@ -138,19 +138,20 @@ Function p有効期間(strDate As String, _
    strD = CDate(strDate)
    strD1 = CDate(ThisWorkbook.Names(R_n).RefersToRange.Cells(1, 1))
    strD2 = CDate(ThisWorkbook.Names(R_n).RefersToRange.Cells(2, 1))
-   r1 = (0 <= DateDiff("d", strD1, strD))
+   R1 = (0 <= DateDiff("d", strD1, strD))
    r2 = (0 <= DateDiff("d", strD, strD2))
-   r = r1 And r2
+   r = R1 And r2
    p有効期間 = r
 End Function
 
 ' --- 配列をDictionaryに変換する
 ' 上位組織を先頭として、その組織に帰属する下位組織を以降に並べた行を
 ' 上位組織の数だけならべた配列を
-' 下位組織を key とし、上位組織を Value とする辞書に変換する。
+' 上位組織自身および下位組織を key とし、
+' 上位組織の記載された行番号を Value とする辞書に変換する。
 ' 複数帰属（同じ下位組織が複数の上位組織に所属する。
 ' 結果、key が複数の Value を持つ）はないものとする。
-' 
+'
 Sub SingleHomeDict(ByRef str辞書() As String, _
                    ByRef dic辞書 As Dictionary)
     '
@@ -158,7 +159,8 @@ Sub SingleHomeDict(ByRef str辞書() As String, _
     '  上位組織を先頭として、その組織に帰属する下位組織を以降に並べた行を
     '  上位組織の数だけならべた配列
     ' 『dic辞書』
-    '  下位組織を key とし、上位組織を Value とする辞書
+    '  str辞書に１から始まる行番号を与えてこれを Value とし、
+    '  各行の上位組織および下位組織を key とする辞書
     '
    Dim U1 As Long
    U1 = UBound(str辞書, 1)
@@ -242,7 +244,7 @@ Private Sub Col2CIonST(strName As String, _
    ' からの範囲ではないのだが、aryC(1) に最初の行が入る。
    ' たとえばもとのシートの６行目からの範囲であれば、そこ（６行目）へのアクセスは、
    ' 『組織』の１行目にアクセスすればよい。
-   Call Col2CIonSTrng(rngC, CI() ,ST())
+   Call Col2CIonSTrng(rngC, CI(), ST())
    '                  ┗与えた範囲（列）の背景色と内容をそれぞれ１列の配列に得る。
 End Sub
 
@@ -314,16 +316,16 @@ Private Sub 組織略称読み取り(ByRef 組織略称CI() As Long, _
    ' １：第１引数として指定した配列に、範囲の ColorIndex をLong型で返す。
    ' ２：第２引数として指定した配列に、範囲の セルの値 をString型で返す。
    ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
-   Call Col2CIonST("組織",組織略称CI(), 組織略称ST())
+   Call Col2CIonST("組織", 組織略称CI(), 組織略称ST())
 End Sub
 
 ' 組織辞書初期化のなかで str組織辞書 を生成するために呼ぶ
-' 
+'
 Private Sub CIonST2Arr(ByRef CI() As Long, _
                        ByRef ST() As String, _
                        ByRef varstrArr() As Variant)
    Dim m As Long
-   m = UBound(ST,1)
+   m = UBound(ST, 1)
    For r = 1 To m
       ' Debug.Print ST(r) & ":" & CI(r)
    Next r
@@ -475,33 +477,57 @@ Private Sub 組織集計個別審査件数更新(ByRef 組織別個別審査件数() As Long)
    Dim R組織集計 As Range
    Set R組織集計 = ThisWorkbook.Names(strName).RefersToRange
    r0 = R組織集計.Row
-   r1 = 列の最終行(strName)
+   R1 = 列の最終行(strName)
    c0 = R組織集計.Column + 2
    Dim R組織集計件数列 As Range
-   Set R組織集計件数列 = Range(Cells(r0, c0), Cells(r1, c0))
+   Set R組織集計件数列 = Range(Cells(r0, c0), Cells(R1, c0))
    R組織集計件数列.Clear
    R組織集計件数列.Font.Name = "BIZ UDゴシック"
    R組織集計件数列 = 組織別個別審査件数
 End Sub
 
-Function 組織集計名() As String
+' この関数は実は使っていない（組織集計名は組織辞書から生成し、組織集計の
+' 個別審査件数も、組織辞書に基づいて集計するので）
+Function 組織集計() As Variant
    '
-   ' 『組織集計』で名付けた範囲から　集計名　を取り出して配列として返す
-   ' 　文字列と数値が混在しているが、ひとまず文字列として読む。
+   ' 『組織集計』で名付けた範囲（左上セル）から　集計名　とその集計名
+   ' 　の件数（のべ３列）の範囲を取り出して配列として返す
+   ' 　文字列と数値が混在となるので Variant として返す
    '
-   Dim strName As String
-   strName = "組織集計"
-   Dim R集計名1 As Range
-   Set R集計名1 = ThisWorkbook.Names(strName).RefersToRange
-   r0 = R集計名1.Row
-   c0 = R集計名1.Column
-   r1 = 列の最終行(strName)
-   c1 = c0 + 2
-   ' ┗・・・年間登録件数と個別審査件数の欄まで拡張
-   Set R集計名1 = Range(Cells(r0, c0), Cells(r1, c1))
-   Dim str集計名() As String
-   str集計名 = R集計名1
-   組織集計名 = str集計名()
+   組織集計 = varNamedRange2Arr("組織集計", 3)
+   ' Debug.Print ("Done")
+End Function
+
+Function 取引集計() As Variant
+   '
+   ' 『取引集計』で名付けた範囲（左上セル）から　集計名　とその集計名
+   ' 　の件数（のべ３列）の範囲を取り出して配列として返す
+   ' 　文字列と数値が混在となるので Variant として返す
+   '
+   取引集計 = varNamedRange2Arr("取引集計", 3)
+   ' Debug.Print ("Done")
+End Function
+
+Function varNamedRange2Arr(strName As String, _
+                           Optional nC As Long = 1) As Variant
+   '
+   ' 第１引数 strName で名付けた範囲を『列の最終行』で拡張して、オプショナルの
+   ' 第２引数 nC の列数（指定しなければ１列のみ）の範囲を配列として返す
+   '
+   Dim R1 As Range
+   Set R1 = ThisWorkbook.Names(strName).RefersToRange
+   Dim ra As Long
+   Dim ca As Long
+   Dim rz As Long
+   Dim cz As Long
+   ra = R1.Row
+   ca = R1.Column
+   rz = 列の最終行(strName)
+   cz = ca + nC - 1
+   Set R1 = Range(Cells(ra, ca), Cells(rz, cz))
+   Dim varArr() As Variant
+   varArr = R1.Value
+   varRange2Arr = varArr()
    ' ┗・・・配列を関数の返す値にするときには『()』が必要
    '
 End Function
@@ -519,13 +545,13 @@ Sub 組織集計_非ゼロ抽出(ByRef 組織集計_非ゼロ() As Variant)
    Set R組織集計 = ThisWorkbook.Names(strName).RefersToRange
    r0 = R組織集計.Row
    c0 = R組織集計.Column
-   r1 = 列の最終行(strName)
+   R1 = 列の最終行(strName)
    c1 = c0 + 2
    ' ┗・・・年間登録件数と個別審査件数の欄まで拡張
    ' Dim strCV() As String
    ' strCV = Range(Cells(r0, c0), Cells(r1, c1)).Value
    Dim strCV() As Variant
-   Set R組織集計 = Range(Cells(r0, c0), Cells(r1, c1))
+   Set R組織集計 = Range(Cells(r0, c0), Cells(R1, c1))
    strCV = R組織集計.Value
    Dim strNZ() As String
    ReDim strNZ(1 To (UBound(strCV, 1) - LBound(strCV, 1) + 1), 1 To 3)
@@ -558,7 +584,7 @@ Private Sub 組織集計_非ゼロ書出(ByRef 組織集計_非ゼロ() As Variant)
    '
    Dim strName As String
    strName = "組織集計"
-   r1 = 列の最終行(strName)
+   R1 = 列の最終行(strName)
    ' ┗・・・全集計名の最後の行数を得る
    strName = "組織集計＿非ゼロ"
    Dim R組織集計_非ゼロ As Range
@@ -567,13 +593,13 @@ Private Sub 組織集計_非ゼロ書出(ByRef 組織集計_非ゼロ() As Variant)
    c0 = R組織集計_非ゼロ.Column
    c1 = c0 + 2
    ' ┗・・・年間登録件数と個別審査件数の欄まで拡張
-   Set R組織集計_非ゼロ = Range(Cells(r0, c0), Cells(r1, c1))
+   Set R組織集計_非ゼロ = Range(Cells(r0, c0), Cells(R1, c1))
    R組織集計_非ゼロ.Clear
    R組織集計_非ゼロ.Font.Name = "BIZ UDゴシック"
    ' ┗・・・消すのはこの領域の最大の行数
    '
-   r1 = UBound(組織集計_非ゼロ, 1) - LBound(組織集計_非ゼロ, 1) + r0
-   Set R組織集計_非ゼロ = Range(Cells(r0, c0), Cells(r1, c1))
+   R1 = UBound(組織集計_非ゼロ, 1) - LBound(組織集計_非ゼロ, 1) + r0
+   Set R組織集計_非ゼロ = Range(Cells(r0, c0), Cells(R1, c1))
    R組織集計_非ゼロ = 組織集計_非ゼロ
    ' ┗・・・書き出すのは行列の行数だけ
 End Sub
@@ -734,18 +760,18 @@ Private Sub 組織辞書読み取り(ByRef str組織辞書() As String)
    strName = "Range_組織辞書"
    Dim r0 As Long
    Dim c0 As Long
-   Dim rZ As Long
-   Dim cZ As Long
+   Dim rz As Long
+   Dim cz As Long
    Dim wr As Long
    Dim wc As Long
    Dim R組織辞書 As Range
    Set R組織辞書 = ThisWorkbook.Names(strName).RefersToRange
    r0 = R組織辞書.Row
    c0 = R組織辞書.Column
-   rZ = 列の最終行(strName)
-   cZ = 行の最終列(strName)
-   wr = rZ - r0 + 1
-   wc = cZ - c0 + 1
+   rz = 列の最終行(strName)
+   cz = 行の最終列(strName)
+   wr = rz - r0 + 1
+   wc = cz - c0 + 1
    Set R組織辞書 = R組織辞書.Resize(wr, wc)
    Dim V組織辞書() As Variant
    V組織辞書 = R組織辞書
@@ -796,10 +822,10 @@ Private Sub 組織略称初期化_■test■()
    ' Debug.Print "UBound(組織,1)：" & UBound(組織, 1)
    ' Debug.Print "UBound(組織,2)：" & UBound(組織, 2)
    nr = 組織.Rows.count
-   nc = 組織.Columns.count
+   nC = 組織.Columns.count
    Debug.Print "組織.Rows.count：" & nr
-   Debug.Print "組織.Columns.count：" & nc
-   ReDim 組織略称_S(nr, nc)
+   Debug.Print "組織.Columns.count：" & nC
+   ReDim 組織略称_S(nr, nC)
    ' 名前付きの範囲（Named Range）から配列へ：.RefersToRange
    ' 組織略称 = 組織.Cells(1, 1)
    組織略称 = 組織
