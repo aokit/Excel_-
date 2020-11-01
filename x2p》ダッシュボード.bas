@@ -152,6 +152,26 @@ End Function
 ' 複数帰属（同じ下位組織が複数の上位組織に所属する。
 ' 結果、key が複数の Value を持つ）はないものとする。
 '
+Sub SingleHomeDict_var(ByRef var辞書() As Variant, _
+                   ByRef dic辞書 As Dictionary)
+   Dim U1 As Long
+   U1 = UBound(str辞書, 1)
+   U2 = UBound(str辞書, 2)
+   For i = 1 To U1
+      d = var辞書(i, 1)
+      d0 = i
+      dic辞書.Add d, d0
+      For j = 2 To U2
+         d = var辞書(i, j)
+         If d = "" Then Exit For
+         If dic辞書.Exists(d) Then
+         Else
+            dic辞書.Add d, d0
+         End If
+      Next j
+   Next i
+End Sub
+
 Sub SingleHomeDict(ByRef str辞書() As String, _
                    ByRef dic辞書 As Dictionary)
     '
@@ -216,6 +236,19 @@ Sub 組織別個別審査件数集計()
       Debug.Print 組織別個別審査件数(i, 1)
    Next i
    Call 組織集計個別審査件数更新(組織別個別審査件数)
+End Sub
+
+Sub テスト取引辞書構成()
+   Dim var辞書() As Variant
+   Dim dic辞書 As New Dictionary
+   var辞書 = varNamedRange2Arr("取引集計")
+   ' Call SingleHomeDict(CStr(var辞書()), dic辞書)
+   Call 取引辞書構成(var辞書(), dic辞書)
+End Sub
+
+Sub 取引辞書構成(ByRef var辞書() As Variant, ByRef dic辞書 As Dictionary)
+   ' Call SingleHomeDict(CStr(var辞書()), dic辞書)
+   Call SingleHomeDict_var(var辞書(), dic辞書)
 End Sub
 
 Sub 組織辞書構成(ByRef str辞書() As String, ByRef dic辞書 As Dictionary)
@@ -527,7 +560,7 @@ Function varNamedRange2Arr(strName As String, _
    Set R1 = Range(Cells(ra, ca), Cells(rz, cz))
    Dim varArr() As Variant
    varArr = R1.Value
-   varRange2Arr = varArr()
+   varNamedRange2Arr = varArr()
    ' ┗・・・配列を関数の返す値にするときには『()』が必要
    '
 End Function
