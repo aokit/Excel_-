@@ -321,7 +321,7 @@ End Sub
 ' 
 Private Sub CIonST2Arr(ByRef CI() As Long, _
                        ByRef ST() As String, _
-                       ByRef strArr() As String)
+                       ByRef varstrArr() As Variant)
    Dim m As Long
    m = UBound(ST,1)
    For r = 1 To m
@@ -349,10 +349,10 @@ Private Sub CIonST2Arr(ByRef CI() As Long, _
       varArr(j, i) = ST(r)
    Next r
    ' varArrは j 行 k 列の配列ということになる。
-   ReDim strArr(1 To j, 1 To k)
+   ReDim varstrArr(1 To j, 1 To k)
    For q = 1 To k
       For p = 1 To j
-         strArr(p, q) = varArr(p, q)
+         varstrArr(p, q) = varArr(p, q)
       Next p
    Next q
 End Sub
@@ -369,7 +369,7 @@ End Sub
    ' 　割り当てることになるので、もとの名前の定義に上書きされる＜別の名前を
    ' 　つけると、もとの名前も残ってしまう点に注意＞）
    '
-Private Sub Arr2ReNamedRange(ByRef strArr() As String, _
+Private Sub Arr2ReNamedRange(ByRef varstrArr() As Variant, _
                              strName As String)
    '
    ' <1 to UBound(strArr,1)> x <1 to UBound(strArr,2)>  の大きさを持つ
@@ -381,14 +381,14 @@ Private Sub Arr2ReNamedRange(ByRef strArr() As String, _
    '
    Dim j As Long
    Dim k As Long
-   j = UBound(strArr, 1)
-   k = UBound(strArr, 2)
+   j = UBound(varstrArr, 1)
+   k = UBound(varstrArr, 2)
    Dim R_n As Range
    Set R_n = _
        ThisWorkbook.Names(strName).RefersToRange.Resize(j, k)
    '    ただし、これだけではシートに定義された名前も更新されたわけではない。
    '
-   R_n = strArr
+   R_n = varstrArr
    '
    ' 名前をつけた範囲についても更新しておく。
    ActiveWorkbook.Names.Add Name:=strName, RefersTo:=R_n
@@ -418,7 +418,7 @@ Sub 組織辞書初期化()
    Dim 組織略称ST() As String
    Call 組織略称読み取り(組織略称CI(), 組織略称ST())
    '
-   Dim str組織辞書() As String
+   Dim str組織辞書() As Variant
    Call CIonST2Arr(組織略称CI(), 組織略称ST(), str組織辞書())
    '
    Dim strName As String
