@@ -144,6 +144,96 @@ Function p有効期間(strDate As String, _
    p有効期間 = r
 End Function
 
+' --- 名前付き範囲が単一セルのときには、範囲を拡大する。
+' cx を１以上の値で指定すると、カラム数は cx で固定される。
+' cx が１より小さいときには、カラム数は『複数行の最終列』から決まる。
+Sub ExpandRangeCont(ByRef R_n As Range, strName As String, cx As Long)
+   Dim ra As Long
+   Dim ca As Long
+   ra = R_n.Row
+   ca = R_n.Column
+   Dim rz As Long
+   rz = 列の最終行(strName)
+   ' Set R_n = Range(Cells(ra, ca), Cells(rz, ca))
+   ' ┗これでは違うシートをみてしまう。
+   ' Set R_n = R_n.Resize(rz - ra + 1, 1)
+   Dim cz As Long
+   If cx < 1 Then
+      cz = 複数行の最終列_range(R_n)
+   Else
+      cz = ca + cx - 1
+   End If
+   ' Set R_n = Range(Cells(ra, ca), Cells(rz, cz))
+   ' ┗これでは違うシートをみてしまう。
+   Set R_n = R_n.Resize(rz - ra + 1, cz - ca + 1)
+End Sub
+
+' --- 範囲をDictionaryに変換する
+' 範囲を各セルの内容を key として記載された行を value とする Dictionary に変換する
+'
+Private Sub SingleHomeDict_range(strName As String, _
+                                 ByRef dic辞書 As Dictionary, _
+                                 Optional cx As Long = 1)
+   '
+   ' 第１引数：辞書にする内容を記載してある範囲に名付けた名前（文字列）
+   ' 第２引数：生成される辞書
+   ' ・・・・・┣範囲の各セルの内容→ key
+   ' ・・・・・┗それが記載された行番号（範囲内での行番号）→ value
+   ' 第３引数：辞書範囲の列数を制限するときその列数
+   ' ・・・・・制限しないときには『 0 』（1より小さい値）とする。
+   ' 第１引数がセル１個だけのときには、
+   ' 範囲は『列の最終行』と『複数行の最終列_range』まで拡大される。
+   '
+   Debug.Print strName
+   Stop
+   Dim R_n As Range
+   Set R_n = ThisWorkbook.Names(strName).RefersToRange
+   Dim nr As Long
+   Dim nC As Long
+   nr = R_n.Rows.count
+   nC = R_n.Columns.count
+   If (nr = 1) And (nC = 1) Then
+      Call ExpandRangeCont(R_n, strName, cx)
+   End If
+   '
+   Dim var辞書() As Variant
+   var辞書 = R_n.Value
+   '
+   Dim U1 As Long
+   U1 = UBound(var辞書, 1)
+   U2 = UBound(var辞書, 2)
+   For i = 1 To U1
+      d = var辞書(i, 1)
+      d0 = i
+      dic辞書.Add d, d0
+      For j = 2 To U2
+         d = var辞書(i, j)
+         If d = "" Then Exit For
+         If dic辞書.Exists(d) Then
+         Else
+            dic辞書.Add d, d0
+         End If
+      Next j
+   Next i
+End Sub
+
+Sub テスト◆SingleHomeDict_range()
+   Dim strName As String
+   Dim dic辞書 As New Dictionary
+   strName = "取引集計"
+   ' Call SingleHomeDict_range(strName, dic辞書, 1)
+   Call SingleHomeDict_range(strName, dic辞書)
+   ' ┗これでも同じはず。
+   Stop
+   ' Erase dic辞書
+   dic辞書.RemoveAll
+   ' Dim dic辞書 As New Dictionary
+   ' strName = "Range_組織辞書"
+   strName = "左上cell_組織辞書"
+   Call SingleHomeDict_range(strName, dic辞書, 0)
+   Stop
+End Sub
+
 ' --- 配列をDictionaryに変換する
 ' 上位組織を先頭として、その組織に帰属する下位組織を以降に並べた行を
 ' 上位組織の数だけならべた配列を
@@ -547,19 +637,19 @@ Function varNamedRange2Arr(strName As String, _
    ' 第１引数 strName で名付けた範囲を『列の最終行』で拡張して、オプショナルの
    ' 第２引数 nC の列数（指定しなければ１列のみ）の範囲を配列として返す
    '
-   Dim R1 As Range
-   Set R1 = ThisWorkbook.Names(strName).RefersToRange
+   Dim R_n As Range
+   Set R_n = ThisWorkbook.Names(strName).RefersToRange
    Dim ra As Long
    Dim ca As Long
    Dim rz As Long
    Dim cz As Long
-   ra = R1.Row
-   ca = R1.Column
+   ra = R_n.Row
+   ca = R_n.Column
    rz = 列の最終行(strName)
    cz = ca + nC - 1
-   Set R1 = Range(Cells(ra, ca), Cells(rz, cz))
+   Set R_n = Range(Cells(ra, ca), Cells(rz, cz))
    Dim varArr() As Variant
-   varArr = R1.Value
+   varArr = R_n.Value
    varNamedRange2Arr = varArr()
    ' ┗・・・配列を関数の返す値にするときには『()』が必要
    '
