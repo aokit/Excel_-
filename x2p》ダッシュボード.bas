@@ -30,8 +30,8 @@ Sub 名前の定義確認の生成()
    Next r
    ' 表示のための名前付け範囲生成：
    ' その下の空白につづいて状況表示用のセルとその名前を配置する。
-   r0 = 列の最終行_range(Cells(rz, c1), , 2)
-   rz = 列の最終行_range(Cells(rz, c1), , 3)
+   r0 = 列の最終行_range(Cells(rz, c1), , 4)
+   rz = 列の最終行_range(Cells(rz, c1), , 5)
    For r = r0 To rz
       Call newName2Range(Cells(r, c2), Cells(r, c1).Value)
    Next r
@@ -600,10 +600,13 @@ Private Sub 組織集計個別審査件数更新(ByRef 組織別個別審査件数() As Long)
    Dim R組織集計 As Range
    Set R組織集計 = ThisWorkbook.Names(strName).RefersToRange
    r0 = R組織集計.Row
-   R1 = 列の最終行(strName)
-   c0 = R組織集計.Column + 2
+   r1 = 列の最終行(strName)
+   ' c0 = R組織集計.Column + 2
    Dim R組織集計件数列 As Range
-   Set R組織集計件数列 = Range(Cells(r0, c0), Cells(R1, c0))
+   ' stop
+   ' Set R組織集計件数列 = Range(Cells(r0, c0), Cells(r1, c0))
+   ' ┣・・・名付けた範囲をもとに新たな範囲を指定する。
+   Set R組織集計件数列 = R組織集計.Offset(0, 2).Resize((r1 - r0 + 1), 1)
    R組織集計件数列.Clear
    R組織集計件数列.Font.Name = "BIZ UDゴシック"
    R組織集計件数列 = 組織別個別審査件数
@@ -647,7 +650,9 @@ Function varNamedRange2Arr(strName As String, _
    ca = R_n.Column
    rz = 列の最終行(strName)
    cz = ca + nC - 1
-   Set R_n = Range(Cells(ra, ca), Cells(rz, cz))
+   ' Set R_n = Range(Cells(ra, ca), Cells(rz, cz))
+   ' ┣・・・基準の範囲からの相対で指定するとシート間違いがない。
+   Set R_n = R_n.resize((rz - ra + 1), (cz - ca + 1))
    Dim varArr() As Variant
    varArr = R_n.Value
    varNamedRange2Arr = varArr()

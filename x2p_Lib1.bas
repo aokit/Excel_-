@@ -88,27 +88,21 @@ Function 列の最終行_range(ByRef R_n As Range, _
    ' R_n - 開始するセルを含む範囲-Range-
    ' k - ＜オプション＞その範囲の中の列番号
    ' q - ＜オプション＞何回目の空白を終わりとみなすか：0だと無制限
-   Dim R1 As Long
+   Dim r1 As Long
    Dim r2 As Long
    Dim mr As Long
    Dim s As Variant
-   R1 = R_n.Row
    mr = Rows.count ' 行の最大値・・・ここで飽和する。
-   Set s = R_n.Columns(k).End(xlDown)
+   Set s = R_n.Columns(k)
    r2 = s.Row
    q = q - 1
-   If (r2 = mr) Or (q = 0) Then
-      列の最終行_range = R1
-      Exit Function
-   End If
-   Do While Not ((r2 = mr) Or (q = 0))
-      ' Debug.Print s.Value
-      R1 = r2
+   Do 
+      r1 = r2
       Set s = s.End(xlDown)
       r2 = s.Row
       q = q - 1
-   Loop
-   列の最終行_range = R1
+   Loop While Not ((r2 >= mr) Or (q = 0))
+   列の最終行_range = r1
 End Function
 
 Function 行の最終列_range(R_n As Range, _
@@ -121,22 +115,16 @@ Function 行の最終列_range(R_n As Range, _
    Dim c2 As Long
    Dim mc As Long
    Dim s As Variant
-   c1 = R_n.Column
    mc = Columns.count ' 列の最大値・・・ここで飽和する。
-   Set s = R_n.Rows(k).End(xlToRight)
+   Set s = R_n.Rows(k)
+   c1 = 0
    c2 = s.Column
-   q = q - 1
-   If (c2 = mc) Or (q = 0) Then
-      行の最終列_range = c1
-      Exit Function
-   End If
-   Do While Not ((c2 = mc) Or (q = 0))
-      ' Debug.Print s.Value
+   Do
       c1 = c2
       Set s = s.End(xlToRight)
       c2 = s.Column
       q = q - 1
-   Loop
+   Loop While Not ((c2 >= mc) Or (q = 0))
    行の最終列_range = c1
 End Function
 
@@ -144,28 +132,24 @@ Function 複数行の最終列_range(R_n As Range, _
                               Optional q As Long = 0) As Long
    ' R_n - 開始するセルを含む範囲-Range-
    ' q - ＜オプション＞何回目の空白を終わりとみなすか：0だと無制限
-   Dim c0 As Long
    Dim c1 As Long
    Dim c2 As Long
    Dim mc As Long
-   Dim s As Range 'yet Variant
+   Dim s As Range ' yet Variant
    mc = Columns.count ' 列の最大値・・・ここで飽和する。
    Dim k As Long
    Dim cx As Long
    cx = 0
    For k = 1 To R_n.Rows.count
-      c0 = R_n.Rows(k).Column
-      Set s = R_n.Rows(k).End(xlToRight)
-      c2 = c0 + s.Column - 1
-      c1 = c2
-      q = q - 1
-      Do While Not ((c2 >= mc) Or (q = 0))
-         ' Debug.Print s.Value
+      Set s = R_n.Rows(k)
+      c1 = 0
+      c2 = 0
+      Do 
          c1 = c2
          Set s = s.End(xlToRight)
-         c2 = c0 + s.Column - 1
+         c2 = s.Column 
          q = q - 1
-      Loop
+      Loop While Not ((c2 >= mc) Or (q = 0))
       If cx < c1 Then cx = c1
    Next k
    複数行の最終列_range = cx
