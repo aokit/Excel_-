@@ -147,7 +147,7 @@ End Function
 ' --- 名前付き範囲が単一セルのときには、範囲を拡大する。
 ' cx を１以上の値で指定すると、カラム数は cx で固定される。
 ' cx が１より小さいときには、カラム数は『複数行の最終列』から決まる。
-Sub ExpandRangeCont(ByRef R_n As Range, strName As String, cx As Long)
+Private Sub ExpandRangeCont(ByRef R_n As Range, strName As String, cx As Long)
    Dim ra As Long
    Dim ca As Long
    ra = R_n.Row
@@ -188,12 +188,16 @@ Private Sub SingleHomeDict_range(strName As String, _
    Stop
    Dim R_n As Range
    Set R_n = ThisWorkbook.Names(strName).RefersToRange
-   Dim nr As Long
-   Dim nC As Long
-   nr = R_n.Rows.count
-   nC = R_n.Columns.count
-   If (nr = 1) And (nC = 1) Then
-      Call ExpandRangeCont(R_n, strName, cx)
+   If False then
+      Dim nr As Long
+      Dim nC As Long
+      nr = R_n.Rows.count
+      nC = R_n.Columns.count
+      If (nr = 1) And (nC = 1) Then
+         Call ExpandRangeCont(R_n, strName, cx)
+      End If
+   Else
+      Set R_n = range_連続列最大行_range(R_n)
    End If
    '
    Dim var辞書() As Variant

@@ -155,4 +155,30 @@ Function 複数行の最終列_range(R_n As Range, _
    複数行の最終列_range = cx
 End Function
 
+Function range_連続列最大行_range(R_n As Range, _
+                                    Optional q As Long = 0) As Range
+   '
+   ' 複数列の最終行を使って、範囲をひろげる
+   ' ・（先頭列の行数）×（最長行の列数）を範囲とする
+   ' R_n - 開始するセルを含む範囲-Range-
+   ' q - ＜オプション＞何回目の空白を終わりとみなすか：0だと無制限
+   Dim r0 As Long
+   Dim c0 As Long
+   r0 = R_n.Row
+   c0 = R_n.Column
+   Dim nr As Long
+   Dim nc As Long
+   nr = R_n.Rows.count
+   nc = R_n.Columns.count
+   If (nr = 1) And (nc = 1) Then
+      ' Call ExpandRangeCont(R_n, strName, cx)
+      Dim rz As Long
+      rz = 列の最終行_range(R_n)
+      Set R_n = R_n.resize((rz - r0 + 1), 1)
+      Dim cz As Long
+      cz = 複数行の最終列_range(R_n)
+      Set R_n = R_n.resize((rz - r0 + 1), (cz - c0 + 1))
+   End If
+   Set range_連続列最大行_range = R_n
+End Function
 
