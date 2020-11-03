@@ -155,11 +155,64 @@ Sub 組織別個別審査件数集計()
    Call 組織集計個別審査件数更新(組織別個別審査件数)
 End Sub
 
+' ┏━━
+' ┃▼４
+' 
+Sub 組織集計_非ゼロ更新()
+   Dim 組織集計_非ゼロ() As Variant
+   ' ┗・・・この配列は、文字列以外も引き渡す目的で Variant としておく。
+   Call 組織集計_非ゼロ抽出(組織集計_非ゼロ)
+   Call 組織集計_非ゼロ書出(組織集計_非ゼロ)
+End Sub
 
+' ┏━━
+' ┃▼５
+' 
+Sub 取引区分別個別審査件数集計()
+   '
+   Dim str承認記録() As String
+   Call 承認記録読み取り(str承認記録)
+   '
+   Dim dic取引区分辞書 As New Dictionary
+   Dim U1 As Long
+   Call SingleHomeDict_namedRange("取引集計",U1,dic取引区分辞書,1)
+   ' ┗『取引集計』と名付けたセルの直下１列を dic取引区分辞書 として確保
+   '
+   Dim 取引区分別個別審査件数() As Long
+   ReDim 取引区分別個別審査件数(1 To U1, 1 To 1)
+   Dim 取引区分別個別審査金額() As Long
+   ReDim 取引区分別個別審査金額(1 To U1, 1 To 1)
+   '
+   Dim 取引区分 As String ' 表では『取引内容区分』
+   Dim 金額 As Long ' 表では『金額（円）』
+   Dim IX As Long
+   Dim U2 As Long
+   U2 = UBound(str承認記録, 1)
+   For i = 2 To U2
+      If p有効期間(str承認記録(i, 2)) Then
+         ' 8 - 表では『取引内容区分』
+         ' 10 - 表では『金額（円）』
+         ' Debug.Print str承認記録(i, 8)
+         ' Debug.Print str承認記録(i, 10)
+         取引区分 = str承認記録(i, 8)
+         金額 = str承認記録(i, 10)
+         If (dic取引区分辞書.Exists(取引区分)) Then
+            IX = dic取引区分辞書.Item(取引区分)
+            ' Debug.Print IX
+            取引区分別個別審査件数(IX, 1) = 取引区分別個別審査件数(IX, 1) + 1
+            取引区分別個別審査金額(IX, 1) = 取引区分別個別審査金額(IX, 1) + 金額
+         End If
+      End If
+   Next i
+   ' stop
+   Call 取引区分集計個別審査件数更新(取引区分別個別審査件数)
+   Call 取引区分集計個別審査金額更新(取引区分別個別審査金額)
+End Sub
 
+'
 ' ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ' ┃┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-' ┃┃一般化プロシジャ
+' ┃┃一般化プロシジャ（おもに Private 関数）
 ' ┃┗
 
 Private Sub Col2CIonSTrng(rngC As Range, _
@@ -413,9 +466,131 @@ Function p有効期間(strDate As String, _
    p有効期間 = r
 End Function
 
+' 組織集計_非ゼロ更新 で使用している。
+'
+Private Sub 組織集計_非ゼロ抽出(ByRef 組織集計_非ゼロ() As Variant)
+   '
+   ' 『組織集計』で名付けた範囲を件数を含むように拡張し、件数が０でない
+   ' 　行で構成された配列を返す
+   ' ▼引数に参照で返す。
+   ' ▼文字列ではなく数値として返したい場合もあるので引数は Variant とした。
+   '
+   Dim strName As String
+   strName = "組織集計"
+   Dim R組織集計 As Range
+   Set R組織集計 = ThisWorkbook.Names(strName).RefersToRange
+   r0 = R組織集計.Row
+   c0 = R組織集計.Column
+   R1 = 列の最終行(strName)
+   c1 = c0 + 2
+   ' ┗・・・年間登録件数と個別審査件数の欄まで拡張
+   ' Dim strCV() As String
+   ' strCV = Range(Cells(r0, c0), Cells(r1, c1)).Value
+   Dim strCV() As Variant
+   Set R組織集計 = Range(Cells(r0, c0), Cells(R1, c1))
+   strCV = R組織集計.Value
+   Dim strNZ() As String
+   ReDim strNZ(1 To (UBound(strCV, 1) - LBound(strCV, 1) + 1), 1 To 3)
+   j = 0
+   For i = LBound(strCV, 1) To UBound(strCV, 1)
+      If (Val(strCV(i, LBound(strCV, 2) + 1)) > 0) _
+            Or (Val(strCV(i, LBound(strCV, 2) + 2)) > 0) Then
+         j = j + 1
+         strNZ(j, 1) = strCV(i, LBound(strCV, 2))
+         strNZ(j, 2) = strCV(i, LBound(strCV, 2) + 1)
+         strNZ(j, 3) = strCV(i, LBound(strCV, 2) + 2)
+      End If
+   Next i
+   Dim NZC() As Variant
+   ReDim NZC(1 To j, 1 To 3)
+   For i = 1 To j
+      NZC(i, 1) = strNZ(i, 1)
+      NZC(i, 2) = Val(strNZ(i, 2))
+      NZC(i, 3) = Val(strNZ(i, 3))
+   Next i
+   組織集計_非ゼロ = NZC
+   '
+End Sub
+
+' 組織集計_非ゼロ更新 で使用している。
+'
+Private Sub 組織集計_非ゼロ書出(ByRef 組織集計_非ゼロ() As Variant)
+   '
+   ' 配列『組織集計＿非ゼロ』（文字列の配列）を受け取って書き出す。
+   ' 引数である配列は、その要素が文字列ではなくて数値の場合にも同様
+   ' に機能してほしいことから、Variant とした。
+   '
+   Dim strName As String
+   strName = "組織集計"
+   R1 = 列の最終行(strName)
+   ' ┗・・・全集計名の最後の行数を得る
+   strName = "組織集計＿非ゼロ"
+   Dim R組織集計_非ゼロ As Range
+   Set R組織集計_非ゼロ = ThisWorkbook.Names(strName).RefersToRange
+   r0 = R組織集計_非ゼロ.Row
+   c0 = R組織集計_非ゼロ.Column
+   c1 = c0 + 2
+   ' ┗・・・年間登録件数と個別審査件数の欄まで拡張
+   Set R組織集計_非ゼロ = Range(Cells(r0, c0), Cells(R1, c1))
+   R組織集計_非ゼロ.Clear
+   R組織集計_非ゼロ.Font.Name = "BIZ UDゴシック"
+   ' ┗・・・消すのはこの領域の最大の行数
+   '
+   R1 = UBound(組織集計_非ゼロ, 1) - LBound(組織集計_非ゼロ, 1) + r0
+   Set R組織集計_非ゼロ = Range(Cells(r0, c0), Cells(R1, c1))
+   R組織集計_非ゼロ = 組織集計_非ゼロ
+   ' ┗・・・書き出すのは行列の行数だけ
+End Sub
+
+' 取引区分別個別審査件数集計　の中で、表の範囲を更新するために呼ぶ
+' 
+Private Sub 取引区分集計個別審査件数更新(ByRef 取引区分別個別審査件数() As Long)
+   ' Call 取引区分集計個別審査件数クリア
+   Dim r0 As Long
+   Dim r1 As Long
+   Dim strName As String
+   strName = "取引集計"
+   Dim R取引集計 As Range
+   Set R取引集計 = ThisWorkbook.Names(strName).RefersToRange
+   r0 = R取引集計.Row
+   r1 = 列の最終行(strName)
+   Dim R取引集計件数列 As Range
+   ' stop
+   Set R取引集計件数列 = R取引集計.Offset(0, 1).Resize((r1 - r0 + 1), 1)
+   '   ┗←・・名付けた範囲・・┛をもとに新たな範囲を指定する。
+   R取引集計件数列.Clear
+   R取引集計件数列.Font.Name = "BIZ UDゴシック"
+   R取引集計件数列.Borders.LineStyle = xlContinuous
+   R取引集計件数列 = 取引区分別個別審査件数
+End Sub
+
+' 取引区分別個別審査件数集計　の中で、表の範囲を更新するために呼ぶ
+' 
+Private Sub 取引区分集計個別審査金額更新(ByRef 取引区分別個別審査金額() As Long)
+   ' Call 取引区分集計個別審査件数クリア
+   Dim r0 As Long
+   Dim r1 As Long
+   Dim strName As String
+   strName = "取引集計"
+   Dim R取引集計 As Range
+   Set R取引集計 = ThisWorkbook.Names(strName).RefersToRange
+   r0 = R取引集計.Row
+   r1 = 列の最終行(strName)
+   Dim R取引集計金額列 As Range
+   ' stop
+   Set R取引集計金額列 = R取引集計.Offset(0, 2).Resize((r1 - r0 + 1), 1)
+   '   ┗←・・名付けた範囲・・┛をもとに新たな範囲を指定する。
+   R取引集計金額列.Clear
+   R取引集計金額列.Font.Name = "BIZ UDゴシック"
+   R取引集計金額列.NumberFormatLocal = "#,##0,"
+   ' ┗・・・金額を千円単位で表示する
+   R取引集計金額列.Borders.LineStyle = xlContinuous
+   R取引集計金額列 = 取引区分別個別審査金額
+End Sub
+
 ' ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ' ┃┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-' ┃┃汎用プロシジャ
+' ┃┃汎用プロシジャ（後にこのプロジェクト以外でも転用する見込みのあるもの）
 ' ┃┗
 
 Private Sub 組織略称クリア()
