@@ -88,7 +88,7 @@ Function 列の最終行_range(ByRef R_n As Range, _
    ' R_n - 開始するセルを含む範囲-Range-
    ' k - ＜オプション＞その範囲の中の列番号
    ' q - ＜オプション＞何回目の空白を終わりとみなすか：0だと無制限
-   Dim r1 As Long
+   Dim R1 As Long
    Dim r2 As Long
    Dim mr As Long
    Dim s As Variant
@@ -96,13 +96,13 @@ Function 列の最終行_range(ByRef R_n As Range, _
    Set s = R_n.Columns(k)
    r2 = s.Row
    q = q - 1
-   Do 
-      r1 = r2
+   Do
+      R1 = r2
       Set s = s.End(xlDown)
       r2 = s.Row
       q = q - 1
    Loop While Not ((r2 >= mr) Or (q = 0))
-   列の最終行_range = r1
+   列の最終行_range = R1
 End Function
 
 Function 行の最終列_range(R_n As Range, _
@@ -143,11 +143,13 @@ Function 複数行の最終列_range(R_n As Range, _
    For k = 1 To R_n.Rows.count
       Set s = R_n.Rows(k)
       c1 = 0
-      c2 = 0
-      Do 
+      ' c2 = 0
+      c2 = s.Column
+      ' 初期値はここで設定しておかないといけなそう。
+      Do
          c1 = c2
          Set s = s.End(xlToRight)
-         c2 = s.Column 
+         c2 = s.Column
          q = q - 1
       Loop While Not ((c2 >= mc) Or (q = 0))
       If cx < c1 Then cx = c1
@@ -167,17 +169,18 @@ Function range_連続列最大行_range(R_n As Range, _
    r0 = R_n.Row
    c0 = R_n.Column
    Dim nr As Long
-   Dim nc As Long
+   Dim nC As Long
    nr = R_n.Rows.count
-   nc = R_n.Columns.count
-   If (nr = 1) And (nc = 1) Then
+   nC = R_n.Columns.count
+   If (nr = 1) And (nC = 1) Then
       ' Call ExpandRangeCont(R_n, strName, cx)
       Dim rz As Long
       rz = 列の最終行_range(R_n)
-      Set R_n = R_n.resize((rz - r0 + 1), 1)
+      Set R_n = R_n.Resize((rz - r0 + 1), 1)
       Dim cz As Long
       cz = 複数行の最終列_range(R_n)
-      Set R_n = R_n.resize((rz - r0 + 1), (cz - c0 + 1))
+      ' cz が 0 になってしまうのはなぜ。
+      Set R_n = R_n.Resize((rz - r0 + 1), (cz - c0 + 1))
    End If
    Set range_連続列最大行_range = R_n
 End Function
