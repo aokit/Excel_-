@@ -118,18 +118,18 @@ Sub 組織別個別審査件数集計()
    Dim str承認記録() As String
    Call 承認記録読み取り(str承認記録)
    Dim dic組織辞書 As New Dictionary
+   Dim U1 As Long
    If False Then 'True then
       Dim str組織辞書() As String
       Call 組織辞書読み取り(str組織辞書)
       Call 組織辞書構成(str組織辞書, dic組織辞書)
+      U1 = UBound(str組織辞書, 1)
    Else
       ' 以下のに置き換えてみる
-      Call SingleHomeDict_namedRange("Range_組織辞書",dic組織辞書,0)
+      Call SingleHomeDict_namedRange("Range_組織辞書",U1,dic組織辞書,0)
    End If
    '
-   Dim U1 As Long
    Dim 組織別個別審査件数() As Long
-   U1 = UBound(str組織辞書, 1)
    ReDim 組織別個別審査件数(1 To U1, 1 To 1)
    '
    Dim 申請者所属 As String
@@ -585,16 +585,21 @@ End Sub
 ' 範囲を各セルの内容を key として記載された行を value とする Dictionary に変換する
 '
 Private Sub SingleHomeDict_namedRange(strName As String, _
+                                      ByRef nClass As Long, _
                                       ByRef dic辞書 As Dictionary, _
-                                      ByRef nValueClass As Long, _
                                       Optional cx As Long = 1)
    ' 値の階級数を返す必要がある。
+   ' ここでの辞書の作成の目的は、複数の key に同じ Value を返すしくみを
+   ' 簡単に実装することなので、何種類の Value を返すことになっているのか
+   ' については、辞書を構成したときにわかるものとして返すことが求められる。
+   ' 第２引数として参照渡ししてもらっておいて返す。
    '
    ' 第１引数：辞書にする内容を記載してある範囲に名付けた名前（文字列）
-   ' 第２引数：生成される辞書
+   ' 第２引数：辞書の持つ Value のクラス数を返すための変数（参照渡し）
+   ' 第３引数：生成される辞書
    ' ・・・・・┣範囲の各セルの内容→ key
    ' ・・・・・┗それが記載された行番号（範囲内での行番号）→ value
-   ' 第３引数：辞書範囲の列数を制限するときその列数
+   ' 第４引数：（オプショナル）辞書範囲の列数を制限するときその列数
    ' ・・・・・制限しないときには『 0 』（1より小さい値）とする。
    ' 第１引数がセル１個だけのときには、
    ' 範囲は『列の最終行』と『複数行の最終列_range』まで拡大される。
@@ -607,6 +612,7 @@ Private Sub SingleHomeDict_namedRange(strName As String, _
    '
    Dim var辞書() As Variant
    var辞書 = R_n.Value
+   nClass = R_n.Rows.Count
    '
    Dim U1 As Long
    U1 = UBound(var辞書, 1)
