@@ -4,7 +4,7 @@
 
 ' ┏━━
 ' ┃▼０
-' 
+'
 Sub 名前の定義確認の生成()
    '
    ' 集計処理で参照／表示する範囲を指定するために名前付けが済んでいるかの
@@ -43,7 +43,7 @@ End Sub
 
 ' ┏━━
 ' ┃▼１
-' 
+'
 Sub 組織辞書初期化()
    '
    ' 組織表（名前『組織』で定義した範囲-Range-　いまのところ、
@@ -81,7 +81,7 @@ End Sub
 
 ' ┏━━
 ' ┃▼２
-' 
+'
 Sub 組織集計1列初期化()
    '
    ' 名前『Range_組織辞書』で名付けた範囲に組織辞書にもとづいて、
@@ -113,7 +113,7 @@ End Sub
 
 ' ┏━━
 ' ┃▼３
-' 
+'
 Sub 組織別個別審査件数集計()
    Dim str承認記録() As String
    Call 承認記録読み取り(str承認記録)
@@ -126,7 +126,7 @@ Sub 組織別個別審査件数集計()
       U1 = UBound(str組織辞書, 1)
    Else
       ' 以下のに置き換えてみる
-      Call SingleHomeDict_namedRange("Range_組織辞書",U1,dic組織辞書,0)
+      Call SingleHomeDict_namedRange("Range_組織辞書", U1, dic組織辞書, 0)
    End If
    '
    Dim 組織別個別審査件数() As Long
@@ -157,7 +157,7 @@ End Sub
 
 ' ┏━━
 ' ┃▼４
-' 
+'
 Sub 組織集計_非ゼロ更新()
    Dim 組織集計_非ゼロ() As Variant
    ' ┗・・・この配列は、文字列以外も引き渡す目的で Variant としておく。
@@ -167,7 +167,7 @@ End Sub
 
 ' ┏━━
 ' ┃▼５
-' 
+'
 Sub 取引区分別個別審査件数集計()
    '
    Dim str承認記録() As String
@@ -175,7 +175,7 @@ Sub 取引区分別個別審査件数集計()
    '
    Dim dic取引区分辞書 As New Dictionary
    Dim U1 As Long
-   Call SingleHomeDict_namedRange("取引集計",U1,dic取引区分辞書,1)
+   Call SingleHomeDict_namedRange("取引集計", U1, dic取引区分辞書, 1)
    ' ┗『取引集計』と名付けたセルの直下１列を dic取引区分辞書 として確保
    '
    Dim 取引区分別個別審査件数() As Long
@@ -207,6 +207,16 @@ Sub 取引区分別個別審査件数集計()
    ' stop
    Call 取引区分集計個別審査件数更新(取引区分別個別審査件数)
    Call 取引区分集計個別審査金額更新(取引区分別個別審査金額)
+End Sub
+
+' ┏━━
+' ┃▼６
+'
+Sub 取引集計_非ゼロ更新()
+   Dim 取引集計_非ゼロ() As Variant
+   ' ┗・・・この配列は、文字列以外も引き渡す目的で Variant としておく。
+   Call 取引集計_非ゼロ抽出(取引集計_非ゼロ)
+   Call 取引集計_非ゼロ書出(取引集計_非ゼロ)
 End Sub
 
 '
@@ -317,7 +327,7 @@ Private Sub CIonST2Arr(ByRef CI() As Long, _
 End Sub
 
 ' 組織別個別審査件数集計　の中で、表の範囲を更新するために呼ぶ
-' 
+'
 Private Sub 組織集計個別審査件数更新(ByRef 組織別個別審査件数() As Long)
    ' 組織集計個別審査件数クリア
    Dim strName As String
@@ -325,20 +335,20 @@ Private Sub 組織集計個別審査件数更新(ByRef 組織別個別審査件数() As Long)
    Dim R組織集計 As Range
    Set R組織集計 = ThisWorkbook.Names(strName).RefersToRange
    r0 = R組織集計.Row
-   R1 = 列の最終行(strName)
+   r1 = 列の最終行(strName)
    ' c0 = R組織集計.Column + 2
    Dim R組織集計件数列 As Range
    ' stop
    ' Set R組織集計件数列 = Range(Cells(r0, c0), Cells(r1, c0))
    ' ┣・・・名付けた範囲をもとに新たな範囲を指定する。
-   Set R組織集計件数列 = R組織集計.Offset(0, 2).Resize((R1 - r0 + 1), 1)
+   Set R組織集計件数列 = R組織集計.Offset(0, 2).Resize((r1 - r0 + 1), 1)
    R組織集計件数列.Clear
    R組織集計件数列.Font.Name = "BIZ UDゴシック"
    R組織集計件数列 = 組織別個別審査件数
 End Sub
 
 ' 組織別個別審査件数集計　の中で、承認記録を読み取るために呼び出す
-' 
+'
 Private Sub 承認記録読み取り(str_承認記録() As String)
    '
    ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
@@ -367,7 +377,7 @@ Private Sub 承認記録読み取り(str_承認記録() As String)
 End Sub
 
 ' 組織別個別審査件数集計　の中で、組織辞書を読み取るために呼び出す
-' 
+'
 Private Sub 組織辞書読み取り(ByRef str組織辞書() As String)
    '
    ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
@@ -452,7 +462,7 @@ Function p有効期間(strDate As String, _
    '  なら False を返す。
    '
    Dim r As Boolean
-   Dim R1 As Boolean
+   Dim r1 As Boolean
    Dim r2 As Boolean
    Dim strD As String
    Dim strD1 As String
@@ -460,9 +470,9 @@ Function p有効期間(strDate As String, _
    strD = CDate(strDate)
    strD1 = CDate(ThisWorkbook.Names(R_n).RefersToRange.Cells(1, 1))
    strD2 = CDate(ThisWorkbook.Names(R_n).RefersToRange.Cells(2, 1))
-   R1 = (0 <= DateDiff("d", strD1, strD))
+   r1 = (0 <= DateDiff("d", strD1, strD))
    r2 = (0 <= DateDiff("d", strD, strD2))
-   r = R1 And r2
+   r = r1 And r2
    p有効期間 = r
 End Function
 
@@ -475,46 +485,80 @@ Private Sub 組織集計_非ゼロ抽出(ByRef 組織集計_非ゼロ() As Variant)
    ' ▼引数に参照で返す。
    ' ▼文字列ではなく数値として返したい場合もあるので引数は Variant とした。
    '
-   Dim strName As String
-   strName = "組織集計"
-   Dim R組織集計 As Range
-   Set R組織集計 = ThisWorkbook.Names(strName).RefersToRange
-   r0 = R組織集計.Row
-   c0 = R組織集計.Column
-   R1 = 列の最終行(strName)
-   c1 = c0 + 2
+   Call NZrowCompaction("組織集計", 3, 組織集計_非ゼロ)
+End Sub
+
+Private Sub 取引集計_非ゼロ抽出(ByRef 取引集計_非ゼロ() As Variant)
+   '
+   Call NZrowCompaction("取引集計", 3, 取引集計_非ゼロ)
+   '
+End Sub
+
+' 組織集計_非ゼロ抽出 で使用している。
+' 取引集計_非ゼロ抽出 で使用している。
+'
+Private Sub NZrowCompaction(strName As String, _
+                            cols As Long, _
+                            ByRef NZC() As Variant)
+   '
+   ' 第１引数『strName』：対象となる表範囲の左上のセルに与えられた名前
+   ' 第２引数   『cols』：上記の表範囲の列数
+   ' 第３引数    『NZC』：返す配列
+   '
+   ' Dim strName As String
+   ' strName = "組織集計"
+   Dim R_n As Range
+   Set R_n = ThisWorkbook.Names(strName).RefersToRange
+   r0 = R_n.Row
+   c0 = R_n.Column
+   r1 = 列の最終行(strName)
+   c1 = c0 + cols - 1
    ' ┗・・・年間登録件数と個別審査件数の欄まで拡張
    ' Dim strCV() As String
    ' strCV = Range(Cells(r0, c0), Cells(r1, c1)).Value
    Dim strCV() As Variant
-   Set R組織集計 = Range(Cells(r0, c0), Cells(R1, c1))
-   strCV = R組織集計.Value
+   Set R_n = Range(Cells(r0, c0), Cells(r1, c1))
+   strCV = R_n.Value
    Dim strNZ() As String
-   ReDim strNZ(1 To (UBound(strCV, 1) - LBound(strCV, 1) + 1), 1 To 3)
+   ReDim strNZ(1 To (UBound(strCV, 1) - LBound(strCV, 1) + 1), 1 To cols)
+   ReDim NZC(1 To (UBound(strCV, 1) - LBound(strCV, 1) + 1), 1 To cols)
+   Dim j As Long
+   Dim c As Long
+   Dim z As Boolean
    j = 0
    For i = LBound(strCV, 1) To UBound(strCV, 1)
-      If (Val(strCV(i, LBound(strCV, 2) + 1)) > 0) _
-            Or (Val(strCV(i, LBound(strCV, 2) + 2)) > 0) Then
+      z = True
+      For c = 2 To cols
+         z = z And (Val(strCV(i, LBound(strCV, 2) + (c - 1))) = 0)
+      Next c
+      If Not (z) Then
          j = j + 1
-         strNZ(j, 1) = strCV(i, LBound(strCV, 2))
-         strNZ(j, 2) = strCV(i, LBound(strCV, 2) + 1)
-         strNZ(j, 3) = strCV(i, LBound(strCV, 2) + 2)
+         For c = 1 To cols
+            strNZ(j, c) = strCV(i, LBound(strCV, 2) + (c - 1))
+         Next c
+         ' strNZ(j, 1) = strCV(i, LBound(strCV, 2))
+         ' strNZ(j, 2) = strCV(i, LBound(strCV, 2) + 1)
+         ' strNZ(j, 3) = strCV(i, LBound(strCV, 2) + 2)
       End If
    Next i
-   Dim NZC() As Variant
-   ReDim NZC(1 To j, 1 To 3)
+   ' Dim NZC() As Variant
+   ReDim NZC(1 To j, 1 To cols)
    For i = 1 To j
       NZC(i, 1) = strNZ(i, 1)
-      NZC(i, 2) = Val(strNZ(i, 2))
-      NZC(i, 3) = Val(strNZ(i, 3))
+      For c = 2 To cols
+         NZC(i, c) = Val(strNZ(i, c))
+      Next c
+      ' NZC(i, 1) = strNZ(i, 1)
+      ' NZC(i, 2) = Val(strNZ(i, 2))
+      ' NZC(i, 3) = Val(strNZ(i, 3))
    Next i
-   組織集計_非ゼロ = NZC
+   ' 組織集計_非ゼロ = NZC
    '
 End Sub
 
 ' 組織集計_非ゼロ更新 で使用している。
 '
-Private Sub 組織集計_非ゼロ書出(ByRef 組織集計_非ゼロ() As Variant)
+Private Sub a_組織集計_非ゼロ書出(ByRef 組織集計_非ゼロ() As Variant)
    '
    ' 配列『組織集計＿非ゼロ』（文字列の配列）を受け取って書き出す。
    ' 引数である配列は、その要素が文字列ではなくて数値の場合にも同様
@@ -522,7 +566,7 @@ Private Sub 組織集計_非ゼロ書出(ByRef 組織集計_非ゼロ() As Variant)
    '
    Dim strName As String
    strName = "組織集計"
-   R1 = 列の最終行(strName)
+   r1 = 列の最終行(strName)
    ' ┗・・・全集計名の最後の行数を得る
    strName = "組織集計＿非ゼロ"
    Dim R組織集計_非ゼロ As Range
@@ -531,19 +575,71 @@ Private Sub 組織集計_非ゼロ書出(ByRef 組織集計_非ゼロ() As Variant)
    c0 = R組織集計_非ゼロ.Column
    c1 = c0 + 2
    ' ┗・・・年間登録件数と個別審査件数の欄まで拡張
-   Set R組織集計_非ゼロ = Range(Cells(r0, c0), Cells(R1, c1))
+   Set R組織集計_非ゼロ = Range(Cells(r0, c0), Cells(r1, c1))
    R組織集計_非ゼロ.Clear
    R組織集計_非ゼロ.Font.Name = "BIZ UDゴシック"
    ' ┗・・・消すのはこの領域の最大の行数
    '
-   R1 = UBound(組織集計_非ゼロ, 1) - LBound(組織集計_非ゼロ, 1) + r0
-   Set R組織集計_非ゼロ = Range(Cells(r0, c0), Cells(R1, c1))
+   r1 = UBound(組織集計_非ゼロ, 1) - LBound(組織集計_非ゼロ, 1) + r0
+   Set R組織集計_非ゼロ = Range(Cells(r0, c0), Cells(r1, c1))
    R組織集計_非ゼロ = 組織集計_非ゼロ
    ' ┗・・・書き出すのは行列の行数だけ
 End Sub
+' ↓
+' これ修正したほうがいい。以下修正版
+'
+Private Sub 組織集計_非ゼロ書出(ByRef 組織集計_非ゼロ() As Variant)
+   '
+   ' 配列『組織集計＿非ゼロ』（文字列の配列）を受け取って書き出す。
+   ' 引数である配列は、その要素が文字列ではなくて数値の場合にも同様
+   ' に機能してほしいことから、Variant とした。
+   '
+   Call PrintNZrowCompaction("組織集計＿非ゼロ", 3, 組織集計_非ゼロ)
+   '
+End Sub
+
+Private Sub 取引集計_非ゼロ書出(ByRef 取引集計_非ゼロ() As Variant)
+   '
+   Call PrintNZrowCompaction("取引集計＿非ゼロ", 3, 取引集計_非ゼロ)
+   '
+End Sub
+
+' 組織集計_非ゼロ書き出し で使用している。
+' 取引集計_非ゼロ書き出し で使用している。
+'
+Private Sub PrintNZrowCompaction(strName As String, _
+                                 cols As Long, _
+                                 ByRef NZC() As Variant)
+   '
+   '
+   '
+   ' strName = "組織集計＿非ゼロ"
+   Dim c0 As Long
+   Dim c1 As Long
+   Dim r0 As Long
+   Dim r1 As Long
+   Dim R_n As Range
+   Set R_n = ThisWorkbook.Names(strName).RefersToRange
+   r0 = R_n.Row
+   c0 = R_n.Column
+   c1 = c0 + cols - 1
+   ' ┗・・・列数が cols になるように最終カラム番号を拡張
+   r1 = 列の最終行(strName)
+   Set R_n = R_n.Resize((r1 - r0 + 1), (c1 - c0 + 1))
+   R_n.Clear
+   ' ┗・・・消すのはこの領域の最大の行数
+   R_n.Font.Name = "BIZ UDゴシック"
+   '
+   r1 = UBound(NZC, 1) - LBound(NZC, 1) + r0
+   ' ┗・・・書き込む行数で表の範囲を更新
+   Set R_n = R_n.Resize((r1 - r0 + 1), (c1 - c0 + 1))
+   R_n = NZC
+   ' ┗・・・書き出すのは行列の行数だけ
+End Sub
+
 
 ' 取引区分別個別審査件数集計　の中で、表の範囲を更新するために呼ぶ
-' 
+'
 Private Sub 取引区分集計個別審査件数更新(ByRef 取引区分別個別審査件数() As Long)
    ' Call 取引区分集計個別審査件数クリア
    Dim r0 As Long
@@ -565,7 +661,7 @@ Private Sub 取引区分集計個別審査件数更新(ByRef 取引区分別個別審査件数() As Long)
 End Sub
 
 ' 取引区分別個別審査件数集計　の中で、表の範囲を更新するために呼ぶ
-' 
+'
 Private Sub 取引区分集計個別審査金額更新(ByRef 取引区分別個別審査金額() As Long)
    ' Call 取引区分集計個別審査件数クリア
    Dim r0 As Long
@@ -787,7 +883,7 @@ Private Sub SingleHomeDict_namedRange(strName As String, _
    '
    Dim var辞書() As Variant
    var辞書 = R_n.Value
-   nClass = R_n.Rows.Count
+   nClass = R_n.Rows.count
    '
    Dim U1 As Long
    U1 = UBound(var辞書, 1)
@@ -795,7 +891,11 @@ Private Sub SingleHomeDict_namedRange(strName As String, _
    For i = 1 To U1
       d = var辞書(i, 1)
       d0 = i
+      
+      On Error Resume Next
       dic辞書.Add d, d0
+      Stop
+      
       For j = 2 To U2
          d = var辞書(i, j)
          If d = "" Then Exit For
@@ -806,4 +906,5 @@ Private Sub SingleHomeDict_namedRange(strName As String, _
       Next j
    Next i
 End Sub
+
 
