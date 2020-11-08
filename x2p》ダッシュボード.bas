@@ -600,7 +600,7 @@ End Sub
 
 Private Sub 取引集計_非ゼロ書出(ByRef 取引集計_非ゼロ() As Variant)
    '
-   Call PrintNZrowCompaction("取引集計＿非ゼロ", 3, 取引集計_非ゼロ, -1)
+   Call PrintNZrowCompaction("取引集計＿非ゼロ", 3, 取引集計_非ゼロ, -4)
    '
 End Sub
 
@@ -612,24 +612,33 @@ Private Sub PrintNZrowCompaction(strName As String, _
                                  ByRef NZC() As Variant, _
                                  Optional ROOT As Long = 0)
    '
-   Call PrintArrayOnNamedRange(strName, cols, NZC, ROOT)
+   Call PrintArrayOnNamedRange(strName, NZC, cols, ROOT)
    '
 End sub
                                  
 Private Sub PrintArrayOnNamedRange(strName As String, _
-                                   cols As Long, _
                                    ByRef Ary() As Variant, _
+                                   cols As Long, _
                                    Optional ROOT As Long = 0)
    '
    ' 配列の内容を名付けた範囲に書き込む。列ごとの書式を設定する
    ' ことができる。列ごとの書式は、各列の書き込む範囲の上方向の
    ' セル（オフセットが ROOT で指定：負の値）に予め設定しておく。
+   ' 範囲の名前付けは、範囲の左上のセルを名付ける。
+   ' 範囲の行数は、名付けたセルの下方向（行番号の増える方向）に
+   ' 内容を持つセルの連続する範囲で拡張される。
+   ' 範囲の列数は、『cols』で与える。
+   ' 『cols』が与えない（デフォルト値０が与えられた）ときは行の
+   ' 範囲内の最も長い（列番号の増える方向で内容を持つセルの連続
+   ' する）範囲で拡張される。
+   ' 列の拡張は未実装。
    ' 
    ' 第１引数『strName』：書き込む範囲につけた名前
-   ' 第２引数   『cols』：書き込む範囲の列数
-   ' 第３引数    『Ary』：書き込む内容を保持した配列
+   ' 第２引数    『Ary』：書き込む内容を保持した配列
+   ' 第３引数（オプション）『cols』：書き込む範囲の列数
    ' 第４引数（オプション）『ROOT(RowOffsetOfTemplate)』
    '
+   ' ▼範囲を拡張して範囲内にあるセルの内容を消去
    Dim c0 As Long
    Dim c1 As Long
    Dim r0 As Long
@@ -644,6 +653,7 @@ Private Sub PrintArrayOnNamedRange(strName As String, _
    Set R_n = R_n.Resize((r1 - r0 + 1), (c1 - c0 + 1))
    R_n.Clear
    ' ┗・・・消すのはこの領域の最大の行数
+   ' ▼列ごとに書式を指定しながら書き込み
    Dim AryR As Variant
    ReDim AryR(LBound(Ary, 1) To UBound(Ary, 1), 1 To 1)
    Dim r As Long
@@ -934,12 +944,16 @@ Private Sub SingleHomeDict_namedRange(strName As String, _
    Dim U1 As Long
    U1 = UBound(var辞書, 1)
    U2 = UBound(var辞書, 2)
+   If (cx > 0) Then
+      U2 = cx
+   End If
+   
    For i = 1 To U1
       d = var辞書(i, 1)
       d0 = i
       
       dic辞書.Add d, d0
-      
+
       For j = 2 To U2
          d = var辞書(i, j)
          If d = "" Then Exit For
