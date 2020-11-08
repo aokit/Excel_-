@@ -600,7 +600,7 @@ End Sub
 
 Private Sub 取引集計_非ゼロ書出(ByRef 取引集計_非ゼロ() As Variant)
    '
-   Call PrintNZrowCompaction("取引集計＿非ゼロ", 3, 取引集計_非ゼロ)
+   Call PrintNZrowCompaction("取引集計＿非ゼロ", 3, 取引集計_非ゼロ, -1)
    '
 End Sub
 
@@ -609,11 +609,27 @@ End Sub
 '
 Private Sub PrintNZrowCompaction(strName As String, _
                                  cols As Long, _
-                                 ByRef NZC() As Variant)
+                                 ByRef NZC() As Variant, _
+                                 Optional ROOT As Long = 0)
    '
+   Call PrintArrayOnNamedRange(strName, cols, NZC, ROOT)
    '
+End sub
+                                 
+Private Sub PrintArrayOnNamedRange(strName As String, _
+                                   cols As Long, _
+                                   ByRef Ary() As Variant, _
+                                   Optional ROOT As Long = 0)
    '
-   ' strName = "組織集計＿非ゼロ"
+   ' 配列の内容を名付けた範囲に書き込む。列ごとの書式を設定する
+   ' ことができる。列ごとの書式は、各列の書き込む範囲の上方向の
+   ' セル（オフセットが ROOT で指定：負の値）に予め設定しておく。
+   ' 
+   ' 第１引数『strName』：書き込む範囲につけた名前
+   ' 第２引数   『cols』：書き込む範囲の列数
+   ' 第３引数    『Ary』：書き込む内容を保持した配列
+   ' 第４引数（オプション）『ROOT(RowOffsetOfTemplate)』
+   '
    Dim c0 As Long
    Dim c1 As Long
    Dim r0 As Long
@@ -628,15 +644,45 @@ Private Sub PrintNZrowCompaction(strName As String, _
    Set R_n = R_n.Resize((r1 - r0 + 1), (c1 - c0 + 1))
    R_n.Clear
    ' ┗・・・消すのはこの領域の最大の行数
-   R_n.Font.Name = "BIZ UDゴシック"
-   '
-   r1 = UBound(NZC, 1) - LBound(NZC, 1) + r0
-   ' ┗・・・書き込む行数で表の範囲を更新
-   Set R_n = R_n.Resize((r1 - r0 + 1), (c1 - c0 + 1))
-   R_n = NZC
-   ' ┗・・・書き出すのは行列の行数だけ
+   Dim AryR As Variant
+   ReDim AryR(LBound(Ary, 1) To UBound(Ary, 1), 1 To 1)
+   Dim r As Long
+   Dim c As Long
+   Dim nfl As String '.NumberFormatLocal
+   Dim bls As Long   '.Borders.LineStyle
+   Dim rw As Long
+   Dim R_0 As Range  '書式のみもつセルを示す Range
+   Dim R_c As Range  '書き込む範囲の列を示す Range
+   rw = UBound(Ary, 1) - LBound(Ary, 1) + 1
+   ' ┗・・・書き込む行数（配列の行数）で
+   Set R_n = R_n.Resize(rw, 1)
+   ' ┗・・・表の更新する範囲を決める。１列のみ。
+   For c = LBound(Ary, 2) To UBound(Ary, 2)
+      ' ┗・・・配列の最初の列から最後の列まで
+      Set R_0 = R_n.Resize(1, 1).Offset(ROOT, (c - 1))
+      If ROOT < 0 Then
+         nfl = R_0.NumberFormatLocal
+         ' ┗・・・書き込む列の先頭行セルからみて ROOT（-1なら１つ上）の
+         ' ・・・・オフセットのセルに設定された書式を持ってくる
+         bls = xlLineStyleNone ' エラーのときの既定値
+         On Error Resume Next
+         bls = R_0.Borders.LineStyle
+         On Error GoTo 0
+      Else
+         nfl = ""
+         bls = xlLineStyleNone ' 指定されている行がないときの既定値
+      End If
+      Set R_c = R_n.Offset(0, (c - 1))
+      R_c.Font.Name = "BIZ UDゴシック"
+      R_c.NumberFormatLocal = nfl
+      R_c.Borders.LineStyle = bls
+      ' ┗・・・列ごとに書式を設定する
+      For r = LBound(Ary, 1) To UBound(Ary, 1)
+         AryR(r, 1) = Ary(r, c)
+      Next r
+      R_n.Offset(0, (c - 1)) = AryR
+   Next c
 End Sub
-
 
 ' 取引区分別個別審査件数集計　の中で、表の範囲を更新するために呼ぶ
 '
@@ -892,9 +938,7 @@ Private Sub SingleHomeDict_namedRange(strName As String, _
       d = var辞書(i, 1)
       d0 = i
       
-      On Error Resume Next
       dic辞書.Add d, d0
-      Stop
       
       For j = 2 To U2
          d = var辞書(i, j)
