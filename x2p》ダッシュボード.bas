@@ -910,8 +910,109 @@ End Sub
 
 ' --- 範囲をDictionaryに変換する
 ' 範囲を各セルの内容を key として記載された行を value とする Dictionary に変換する
+' 組織名や取引区分の集計辞書で、前者であれば複数列、後者は１列の辞書変換
 '
 Private Sub SingleHomeDict_namedRange(strName As String, _
+                                      ByRef nClass As Long, _
+                                      ByRef dic辞書 As Dictionary, _
+                                      Optional cx As Long = 1)
+   Call MultiHomeDict_namedRange(strName, _
+                                 nClass, _
+                                 dic辞書, _
+                                 cx, _
+                                 True)
+End Sub
+
+' --- 範囲をDictionaryに変換する
+' 範囲を各セルの内容を key として記載された行を value とする Dictionary に変換する
+' 同じ key が複数の行に現れる場合を許し、その場合のために、value は記載された行番号
+' のリストとする辞書。
+' 第５引数 pS を True にすると、value は記載された行番号そのものとなる。
+'
+Private Sub MultiHomeDict_namedRange(strName As String, _
+                                     ByRef nClass As Long, _
+                                     ByRef dic辞書 As Dictionary, _
+                                     Optional cx As Long = 1, _
+                                     Optional pS As Boolean = false)
+   ' 値の階級数を返す必要がある。
+   ' ここでの辞書の作成の目的は、複数の key に同じ Value を返すしくみを
+   ' 簡単に実装することなので、何種類の Value を返すことになっているのか
+   ' については、辞書を構成したときにわかるものとして返すことが求められる。
+   ' 第２引数として参照渡ししてもらっておいて返す。
+   '
+   ' 第１引数：辞書にする内容を記載してある範囲に名付けた名前（文字列）
+   ' 第２引数：辞書の持つ Value のクラス数を返すための変数（参照渡し）
+   ' 第３引数：生成される辞書
+   ' ・・・・・┣範囲の各セルの内容→ key
+   ' ・・・・・┗それが記載された行番号（範囲内での行番号）→ value
+   ' 第４引数：（オプショナル）辞書範囲の列数を制限するときその列数
+   ' ・・・・・制限しないときには『 0 』（1より小さい値）とする。
+   ' 第１引数がセル１個だけのときには、
+   ' 範囲は『列の最終行』と『複数行の最終列_range』まで拡大される。
+   '
+   ' Debug.Print strName
+   ' Stop
+   Dim R_n As Range
+   Set R_n = ThisWorkbook.Names(strName).RefersToRange
+   Set R_n = range_連続列最大行_range(R_n)
+   '
+   Dim var辞書() As Variant
+   var辞書 = R_n.Value
+   nClass = R_n.Rows.count
+   '
+   Dim U1 As Long
+   U1 = UBound(var辞書, 1)
+   U2 = UBound(var辞書, 2)
+   If (cx > 0) Then
+      U2 = cx
+   End If
+   
+   Dim d0 As Long
+   If pS Then
+      For i = 1 To U1
+         d0 = i
+         ' ┗ この辞書での value となるd0 は値。
+         For j = 1 To U2
+            d = var辞書(i, j)
+            If d = "" Then Exit For
+            If dic辞書.Exists(d) Then
+               ' この辞書での key である d が
+               ' すでに登録されているときは、
+               ' つまり２回目以降は、無視する。
+            Else
+               dic辞書.Add d, d0
+            End If
+         Next j
+      Next i
+   Else
+      For i = 1 To U1
+         d0 = i
+         ' ┗ この辞書での value の要素となるd0 は値。
+         For j = 1 To U2
+            d = var辞書(i, j)
+            If d = "" Then Exit For
+            Dim dv() As Variant ' 再定義が前提
+            If dic辞書.Exists(d) Then
+               dv = dic辞書.Item(d)
+               k = UBound(dv, 1)
+               ReDim Preserve dv(1 To k + 1)
+               dv(k + 1) = d0
+               dic辞書.Item(d) = dv
+            Else
+               ReDim Preserve dv(1 To 1)
+               dv(0 + 1) = d0
+               dict辞書.Add d, dv
+            End If
+            Erase dv ' つぎの回のために消す
+         Next j
+      Next i
+   End if
+End Sub
+
+' --- 範囲をDictionaryに変換する
+' 範囲を各セルの内容を key として記載された行を value とする Dictionary に変換する
+'
+Private Sub x_SingleHomeDict_namedRange(strName As String, _
                                       ByRef nClass As Long, _
                                       ByRef dic辞書 As Dictionary, _
                                       Optional cx As Long = 1)
