@@ -27,7 +27,11 @@ Sub 名前の定義確認の生成()
    c2 = BA.TopLeftCell.Column
    c1 = c2 - 1
    r0 = BA.TopLeftCell.Row + 1
-   rz = 列の最終行_range(Cells(r0, c1), , 2) ' 最初の空白行の手前の行
+   ' rz = 列の最終行_range(Cells(r0, c1), , 2) ' 最初の空白行の手前の行
+   rz = 列の最終行_range(Cells(r0, c1), , 3) ' 最初の空白行の手前の行
+   ' ┗・・・なぜかここ、パラメータ（上記の３）を増やさないといけなかった。
+   ' 　　　　どうしてかは未解明
+   ' stop
    For r = r0 To rz
       Cells(r, c2).Value = "=isref(" & Cells(r, c1).Value & ")"
    Next r
@@ -217,6 +221,31 @@ Sub 取引集計_非ゼロ更新()
    ' ┗・・・この配列は、文字列以外も引き渡す目的で Variant としておく。
    Call 取引集計_非ゼロ抽出(取引集計_非ゼロ)
    Call 取引集計_非ゼロ書出(取引集計_非ゼロ)
+End Sub
+
+' ┏━━
+' ┃▼７
+'
+' ◆仕向地辞書（集計名／別名⇒行番号）の生成
+' ┃　・名付け範囲『仕向地別名』から
+' ◆仕向地集計名配列（行番号→集計名）の生成
+' ◆仕向地集計
+' ◆仕向地別名回数表示（０回と２回以上を名付け範囲『仕向地別名回数』に表示）
+' 　　・名付け範囲『仕向地別名』と同じシートに『仕向地別名回数』（２列）を設定
+' 　　　仕向地の別名に関して、別名に記載されていないもの（０回）　と
+' 　　　別名に複数回（２回以上）記載されているもの　を回数とともに表示している。
+'
+Sub 仕向地別集計()
+   Dim dic仕向番号 As New Dictionary
+   Dim ary集計名() As String
+   Dim ary集計名件数金額() As Variant
+   Call 仕向地辞書生成("仕向地別名", dic仕向番号)
+   Stop
+   ' ┗・・・ここで　Debug.Print(dic仕向番号("イタリヤ")(1))　とすれば
+   ' 　　　　dic仕向番号に読み込まれていることがわかる
+   ' Call 仕向地集計名配列生成(ary集計名件数金額)
+   ' Call 仕向地集計("承認記録", 11, 10, dic仕向番号, ary集計名件数金額)
+   ' Call 仕向地別名回数表示("仕向地別名回数")
 End Sub
 
 '
@@ -740,6 +769,15 @@ Private Sub 取引区分集計個別審査金額更新(ByRef 取引区分別個別審査金額() As Long)
    R取引集計金額列 = 取引区分別個別審査金額
 End Sub
 
+Private Sub 仕向地辞書生成(strName As String, _
+                           ByRef dicDIN As Dictionary)
+   ' 仕向地辞書生成("仕向地別名", dic仕向番号)
+   ' dicDN - Distination ID Number
+   Dim nClass As Long
+   nClass = 0
+   Call MultiHomeDict_namedRange(strName, nClass, dicDIN)
+End Sub
+
 ' ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ' ┃┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ' ┃┃汎用プロシジャ（後にこのプロジェクト以外でも転用する見込みのあるもの）
@@ -932,8 +970,8 @@ End Sub
 Private Sub MultiHomeDict_namedRange(strName As String, _
                                      ByRef nClass As Long, _
                                      ByRef dic辞書 As Dictionary, _
-                                     Optional cx As Long = 1, _
-                                     Optional pS As Boolean = false)
+                                     Optional cx As Long = 0, _
+                                     Optional pS As Boolean = False)
    ' 値の階級数を返す必要がある。
    ' ここでの辞書の作成の目的は、複数の key に同じ Value を返すしくみを
    ' 簡単に実装することなので、何種類の Value を返すことになっているのか
@@ -942,6 +980,7 @@ Private Sub MultiHomeDict_namedRange(strName As String, _
    '
    ' 第１引数：辞書にする内容を記載してある範囲に名付けた名前（文字列）
    ' 第２引数：辞書の持つ Value のクラス数を返すための変数（参照渡し）
+   ' 　　　　　別名辞書が何行の範囲で構成されているかが返される。
    ' 第３引数：生成される辞書
    ' ・・・・・┣範囲の各セルの内容→ key
    ' ・・・・・┗それが記載された行番号（範囲内での行番号）→ value
@@ -949,6 +988,13 @@ Private Sub MultiHomeDict_namedRange(strName As String, _
    ' ・・・・・制限しないときには『 0 』（1より小さい値）とする。
    ' 第１引数がセル１個だけのときには、
    ' 範囲は『列の最終行』と『複数行の最終列_range』まで拡大される。
+   ' 第５引数： cx - 範囲のカラム数を固定値で指定するときその値。
+   ' 　　　　　指定されないときは値 0 とみなす。最も長い行のカラム数が
+   ' 　　　　　指定されたものとみなす。
+   ' 第６引数： pS - SingleHomeDict として呼ぶときに True にする。
+   ' 　　　　　指定されないときは値 False とみなす。複数の行番号への帰属
+   ' 　　　　　がありえるものとして（かりに行番号が１つだけでも、要素が１つの）
+   ' 　　　　　配列を返す辞書となる。
    '
    ' Debug.Print strName
    ' Stop
@@ -1001,7 +1047,7 @@ Private Sub MultiHomeDict_namedRange(strName As String, _
             Else
                ReDim Preserve dv(1 To 1)
                dv(0 + 1) = d0
-               dict辞書.Add d, dv
+               dic辞書.Add d, dv
             End If
             Erase dv ' つぎの回のために消す
          Next j
