@@ -239,13 +239,30 @@ Sub 仕向地別集計()
    Dim dic仕向番号 As New Dictionary
    Dim ary集計名() As String
    Dim ary集計名件数金額() As Variant
-   Call 仕向地辞書生成("仕向地別名", dic仕向番号)
-   Stop
+   Dim nClass As Long
+   Call 仕向地辞書生成("仕向地別名", nClass, dic仕向番号)
+   ' Stop
    ' ┗・・・ここで　Debug.Print(dic仕向番号("イタリヤ")(1))　とすれば
    ' 　　　　dic仕向番号に読み込まれていることがわかる
-   ' Call 仕向地集計名配列生成(ary集計名件数金額)
-   ' Call 仕向地集計("承認記録", 11, 10, dic仕向番号, ary集計名件数金額)
+   Call 仕向地集計名配列生成("仕向地別名", nClass, ary集計名件数金額)
+   ' ┗・・・
+   Call 仕向地集計("承認記録", 11, 10, dic仕向番号, ary集計名件数金額)
+   Stop
    ' Call 仕向地別名回数表示("仕向地別名回数")
+End Sub
+
+Private Sub 仕向地集計(strName As String, _
+                       iC_仕向地 As Long, _
+                       iC_金額 As Long, _
+                       ByRef dicDIN As Dictionary, _
+                       ByRef aryNTM() As Variant)
+   ' ("承認記録", 11, 10, dic仕向番号, ary集計名件数金額)
+   Dim str承認記録() As String
+   ' Call 承認記録読み取り(str承認記録)
+   Call NamedRangeSQ2ArrStr("承認記録", str承認記録)
+   Stop
+   ' ここから　配列　str承認記録　に対して　▼３／▼５を参考にして集計処理を行う。
+   '
 End Sub
 
 '
@@ -377,6 +394,7 @@ Private Sub 組織集計個別審査件数更新(ByRef 組織別個別審査件数() As Long)
 End Sub
 
 ' 組織別個別審査件数集計　の中で、承認記録を読み取るために呼び出す
+' 仕向地集計　の中でも呼び出す。
 '
 Private Sub 承認記録読み取り(str_承認記録() As String)
    '
@@ -385,11 +403,18 @@ Private Sub 承認記録読み取り(str_承認記録() As String)
    ' 　引数として指定した配列に、範囲の セルの値 をString型で返す。
    ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
    '
+   Call NamedRangeSQ2ArrStr("承認記録",str_承認記録)
+End Sub
+
+Private Sub NamedRangeSQ2ArrStr(strName As String, _
+                                str_承認記録() As String)
+   ' 第１引数：同じ長さの複数の行からなる範囲　に名付けた名前
+   ' 第２引数：上記の範囲を格納する配列
    ' 領域の大きさを確認（mr, mc）
    Dim mr As Long
    Dim mc As Long
-   mr = 列の最終行("承認記録")
-   mc = 行の最終列("承認記録")
+   mr = 列の最終行(strName)
+   mc = 行の最終列(strName)
    Dim V_承認記録() As Variant
    Dim 承認記録 As Range
    Set 承認記録 = ThisWorkbook.Names("承認記録").RefersToRange.Resize(mr, mc)
@@ -769,13 +794,32 @@ Private Sub 取引区分集計個別審査金額更新(ByRef 取引区分別個別審査金額() As Long)
    R取引集計金額列 = 取引区分別個別審査金額
 End Sub
 
+' 仕向地別集計　で利用
+'
 Private Sub 仕向地辞書生成(strName As String, _
+                           ByRef nClass As Long, _
                            ByRef dicDIN As Dictionary)
    ' 仕向地辞書生成("仕向地別名", dic仕向番号)
    ' dicDN - Distination ID Number
-   Dim nClass As Long
-   nClass = 0
    Call MultiHomeDict_namedRange(strName, nClass, dicDIN)
+End Sub
+
+' 仕向地別集計　で利用
+'
+Private Sub 仕向地集計名配列生成(strName As String, _
+                                 ByRef nClass As Long, _
+                                 ByRef aryNTM As Variant)
+   'ary集計名件数金額 - Name, cont of Times, amount of Money
+   ReDim aryNTM(1 To nClass, 1 To 3)
+   Dim aryN() As Variant
+   ReDim aryN(1 To nClass, 1 To 1)
+   Call NamedRange2ary(strName, aryN)
+   ' Stop
+   For i = LBound(aryN, 1) To UBound(aryN, 1)
+      aryNTM(i, 1) = aryN(i, 1)
+   Next i
+   ' Stop
+   '
 End Sub
 
 ' ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1055,61 +1099,21 @@ Private Sub MultiHomeDict_namedRange(strName As String, _
    End if
 End Sub
 
-' --- 範囲をDictionaryに変換する
-' 範囲を各セルの内容を key として記載された行を value とする Dictionary に変換する
+' 仕向地集計名配列生成　で利用
+' 
+' 名付けられた範囲の列を行方向に拡張した範囲を配列に格納
 '
-Private Sub x_SingleHomeDict_namedRange(strName As String, _
-                                      ByRef nClass As Long, _
-                                      ByRef dic辞書 As Dictionary, _
-                                      Optional cx As Long = 1)
-   ' 値の階級数を返す必要がある。
-   ' ここでの辞書の作成の目的は、複数の key に同じ Value を返すしくみを
-   ' 簡単に実装することなので、何種類の Value を返すことになっているのか
-   ' については、辞書を構成したときにわかるものとして返すことが求められる。
-   ' 第２引数として参照渡ししてもらっておいて返す。
-   '
-   ' 第１引数：辞書にする内容を記載してある範囲に名付けた名前（文字列）
-   ' 第２引数：辞書の持つ Value のクラス数を返すための変数（参照渡し）
-   ' 第３引数：生成される辞書
-   ' ・・・・・┣範囲の各セルの内容→ key
-   ' ・・・・・┗それが記載された行番号（範囲内での行番号）→ value
-   ' 第４引数：（オプショナル）辞書範囲の列数を制限するときその列数
-   ' ・・・・・制限しないときには『 0 』（1より小さい値）とする。
-   ' 第１引数がセル１個だけのときには、
-   ' 範囲は『列の最終行』と『複数行の最終列_range』まで拡大される。
-   '
-   ' Debug.Print strName
-   ' Stop
-   Dim R_n As Range
-   Set R_n = ThisWorkbook.Names(strName).RefersToRange
-   Set R_n = range_連続列最大行_range(R_n)
-   '
-   Dim var辞書() As Variant
-   var辞書 = R_n.Value
-   nClass = R_n.Rows.count
-   '
-   Dim U1 As Long
-   U1 = UBound(var辞書, 1)
-   U2 = UBound(var辞書, 2)
-   If (cx > 0) Then
-      U2 = cx
-   End If
-   
-   For i = 1 To U1
-      d = var辞書(i, 1)
-      d0 = i
-      
-      dic辞書.Add d, d0
-
-      For j = 2 To U2
-         d = var辞書(i, j)
-         If d = "" Then Exit For
-         If dic辞書.Exists(d) Then
-         Else
-            dic辞書.Add d, d0
-         End If
-      Next j
-   Next i
+Private Sub NamedRange2ary(strName As String, _
+                           ByRef aryV As Variant)
+   ' 第１引数：範囲につけた名前　※１　
+   ' 第２引数：上記の範囲を拡張して内容を格納して返す配列
+   ' ※１　その名前がなかったらそれなりのエラーを返したいところ
+   ' 
+   Dim rngC As Range
+   Set rngC = ThisWorkbook.Names(strName).RefersToRange
+   ' Set rngC = 列の最終行
+   ' stop
+   Set rngC = range_列の最終行_range(rngC)
+   aryV = rngC
 End Sub
-
 

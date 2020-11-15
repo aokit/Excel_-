@@ -105,6 +105,34 @@ Function 列の最終行_range(ByRef R_n As Range, _
    列の最終行_range = R1
 End Function
 
+Function range_列の最終行_range(ByRef R_n As Range, _
+                                Optional k As Long = 1, _
+                                Optional q As Long = 0) As Range
+   ' R_n - 開始するセルを含む範囲-Range-
+   ' k - ＜オプション＞その範囲の中の列番号
+   ' q - ＜オプション＞何回目の空白を終わりとみなすか：0だと無制限
+   Dim r0 As Long
+   Dim r1 As Long
+   Dim r2 As Long
+   Dim mr As Long
+   Dim s As Variant
+   r0 = R_n.Row
+   mr = Rows.count ' 行の最大値・・・ここで飽和する。
+   Set s = R_n.Columns(k)
+   r2 = s.Row
+   q = q - 1
+   Do
+      r1 = r2
+      Set s = s.End(xlDown)
+      r2 = s.Row
+      q = q - 1
+   Loop While Not ((r2 >= mr) Or (q = 0))
+   ' 列の最終行_range = R1
+   Set range_列の最終行_range = R_n.resize((r1 - r0 + 1))
+   '   　　　　　　　　　　　　　　列は省略して行のみ拡張┛
+   '┗戻り値が範囲つまり『オブジェクト』なので Set を使う！！
+End Function
+
 Function 行の最終列_range(R_n As Range, _
                           Optional k As Long = 1, _
                           Optional q As Long = 0) As Long
