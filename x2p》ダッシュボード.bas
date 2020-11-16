@@ -239,6 +239,7 @@ Sub 仕向地別集計()
    Dim dic仕向番号 As New Dictionary
    Dim ary集計名() As String
    Dim ary集計名件数金額() As Variant
+   Dim ary未割当仕向() As String
    Dim nClass As Long
    Call 仕向地辞書生成("仕向地別名", nClass, dic仕向番号)
    ' Stop
@@ -246,8 +247,10 @@ Sub 仕向地別集計()
    ' 　　　　dic仕向番号に読み込まれていることがわかる
    Call 仕向地集計名配列生成("仕向地別名", nClass, ary集計名件数金額)
    ' ┗・・・
-   Call 仕向地集計("承認記録", 11, 10, dic仕向番号, ary集計名件数金額)
+   Call 仕向地集計("承認記録", 11, 10, dic仕向番号, ary集計名件数金額, ary未割当仕向)
    Stop
+   ' ┗・・・このあと　集計名件数金額　と　未割当仕向　を表示する
+   ' Call 仕向地集計名件数金額表示("仕向地集計")
    ' Call 仕向地別名回数表示("仕向地別名回数")
 End Sub
 
@@ -255,13 +258,67 @@ Private Sub 仕向地集計(strName As String, _
                        iC_仕向地 As Long, _
                        iC_金額 As Long, _
                        ByRef dicDIN As Dictionary, _
-                       ByRef aryNTM() As Variant)
+                       ByRef aryNTM() As Variant, _
+                       ByRef aryYAD() As String)
    ' ("承認記録", 11, 10, dic仕向番号, ary集計名件数金額)
+   ' 第６引数：未割り当て仕向地を返す（）
+   '
+   ReDim aryYAD(1 To 200)
+   ' ┗・・・未割当の仕向を格納する（返すときには未使用を削る）
+   Dim nYAD As Long
+   nYAD = 0
    Dim str承認記録() As String
    ' Call 承認記録読み取り(str承認記録)
    Call NamedRangeSQ2ArrStr("承認記録", str承認記録)
-   Stop
+   ' Stop
    ' ここから　配列　str承認記録　に対して　▼３／▼５を参考にして集計処理を行う。
+   Dim U2 As Long
+   ' 件数と金額を初期化（Emptyではなく0に）
+   U2 = UBound(aryNTM, 1)
+   For i = 1 To U2
+      aryNTM(i, 2) = 0
+      aryNTM(i, 3) = 0
+   Next i
+   ' str承認記録　の全行をスキャン
+   U2 = UBound(str承認記録, 1)
+   Dim iC_承認日 As Long
+   iC_承認日 = 2
+   Dim IX As Long
+   Dim str仕向地 As String
+   Dim str金額 As String
+   For i = 2 To U2
+      If p有効期間(str承認記録(i, iC_承認日)) Then
+         str仕向地 = str承認記録(i, iC_仕向地)
+         str金額 = str承認記録(i, iC_金額)
+         If dicDIN.Exists(str仕向地) Then
+            Dim aryIX() As Variant
+            aryIX = dicDIN.Item(str仕向地)
+            ' ┗・・・仕向地の Identification Number（複数割当もあり得るのでの配列）
+            Dim U22 As Long
+            u22 = UBound(aryIX, 1)
+            For j = 1 To U22
+               If j > 1 Then Debug.Print j
+               IX = aryIX(j)
+               aryNTM(IX, 2) = aryNTM(IX, 2) + 1
+               ' aryNTM(IX, 3) = aryNTM(IX, 3) + Val(str金額)
+               aryNTM(IX, 3) = aryNTM(IX, 3) + Val(str金額) / U22
+               ' ┗・・・別名割当回数で均等分割して積算
+            Next j
+            Erase aryIX
+         Else
+            Debug.Print(str仕向地)
+            ' ┗集計名にも別名にもない仕向地はひとまず印刷しておく。
+            ' 　名付け範囲『別名回数』に０回として表示するために
+            ' 　配列を構成しておく予定。
+            nYAD = nYAD + 1
+            aryYAD(nYAD) = str仕向地
+         End If
+      End If
+   Next i
+   ReDim Preserve aryYAD(1 To nYAD)
+   ' ┗・・・未割当仕向の配列で書き込んでいないところを切り落とす
+   ' 　　　　名付け範囲『別名回数』に０回として表示する対象
+   ' Stop
    '
 End Sub
 
