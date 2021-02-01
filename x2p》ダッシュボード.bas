@@ -239,7 +239,8 @@ Sub 仕向地別集計()
    Dim dic仕向番号 As New Dictionary
    Dim ary集計名() As String
    Dim ary集計名件数金額() As Variant
-   Dim ary未割当仕向() As String
+   ' Dim ary未割当仕向() As String
+   Dim ary未割当仕向() As Variant
    Dim nClass As Long
    Call 仕向地辞書生成("仕向地別名", nClass, dic仕向番号)
    ' Stop
@@ -248,9 +249,29 @@ Sub 仕向地別集計()
    Call 仕向地集計名配列生成("仕向地別名", nClass, ary集計名件数金額)
    ' ┗・・・
    Call 仕向地集計("承認記録", 11, 10, dic仕向番号, ary集計名件数金額, ary未割当仕向)
-   Stop
+   ' Stop
    ' ┗・・・このあと　集計名件数金額　と　未割当仕向　を表示する
-   ' Call 仕向地集計名件数金額表示("仕向地集計")
+   ' ┏仕向地集計名件数金額表示
+   Call PrintArrayOnNamedRange("仕向地集計", ary集計名件数金額, 3, -4)
+   ' ┏未割当別名表示
+   ' Stop
+   'Call PrintArrayOnNamedRange("未割当別名", ary集計名件数金額, 1)
+   '
+   Call PrintArrayOnNamedRange("未割当別名", ary未割当仕向, 1)
+   'Call PrintArrayOnNamedRange("未割当別名", Transpose(ary未割当仕向), 1)
+   ' Dim aryT As Variant
+   ' Dim Ur As Long
+   ' Dim Lr As Long
+   ' Ur = UBound(ary未割当仕向, 1)
+   ' Lr = LBound(ary未割当仕向, 1)
+   ' ReDim aryT(Lr To Ur, 1 To 1)
+   ' For r = Lr To Ur
+   '    aryT(r, 1) = ary未割当仕向(r)
+   ' Next r
+   ' Stop
+   ' Call PrintArrayOnNamedRange("未割当別名", aryT, 1)
+   ' 
+   Stop
    ' Call 仕向地別名回数表示("仕向地別名回数")
 End Sub
 
@@ -259,11 +280,21 @@ Private Sub 仕向地集計(strName As String, _
                        iC_金額 As Long, _
                        ByRef dicDIN As Dictionary, _
                        ByRef aryNTM() As Variant, _
-                       ByRef aryYAD() As String)
+                       ByRef aryYAD() As Variant)
+   '...................ByRef aryYAD() As String)
+   ' aryYAD　未割当仕向　の扱い
+   ' 表示させるときに aryYAD も Variant でないと型が一致せずコンパイルエラー
+   ' を起こしてしまうので、なんだか腑に落ちないが Variant にした。
+   ' また、表に戻す際に、１次元だと行になってしまうので、２次元の１列配列に
+   ' 移し替えている。
+   '
    ' ("承認記録", 11, 10, dic仕向番号, ary集計名件数金額)
    ' 第６引数：未割り当て仕向地を返す（）
    '
-   ReDim aryYAD(1 To 200)
+   ' ReDim aryYAD(1 To 200)
+   ' ２次元にしておく
+   ' ReDim aryYAD(1 To 200, 1 To 1)
+   Dim TaryYAD(1 To 200)
    ' ┗・・・未割当の仕向を格納する（返すときには未使用を削る）
    Dim nYAD As Long
    nYAD = 0
@@ -311,13 +342,16 @@ Private Sub 仕向地集計(strName As String, _
             ' 　名付け範囲『別名回数』に０回として表示するために
             ' 　配列を構成しておく予定。
             nYAD = nYAD + 1
-            aryYAD(nYAD) = str仕向地
+            TaryYAD(nYAD) = str仕向地
          End If
       End If
    Next i
-   ReDim Preserve aryYAD(1 To nYAD)
+   ReDim aryYAD(1 To nYAD, 1 To 1)
    ' ┗・・・未割当仕向の配列で書き込んでいないところを切り落とす
    ' 　　　　名付け範囲『別名回数』に０回として表示する対象
+   For j = 1 To nYAD
+      aryYAD(j, 1) = TaryYAD(j)
+   Next j
    ' Stop
    '
 End Sub
@@ -727,6 +761,12 @@ Private Sub PrintNZrowCompaction(strName As String, _
    '
 End sub
                                  
+Private Sub Copy1Dto2CAry(ByRef iAry() As Variant, _
+                        ByRef oAry() As Variant)
+   ' iAry() が１次元配列であるときだけ作用する。
+   ' oAry() は列数が１の２次元配列である。
+End Sub
+
 Private Sub PrintArrayOnNamedRange(strName As String, _
                                    ByRef Ary() As Variant, _
                                    cols As Long, _
@@ -748,6 +788,10 @@ Private Sub PrintArrayOnNamedRange(strName As String, _
    ' 第２引数    『Ary』：書き込む内容を保持した配列
    ' 第３引数（オプション）『cols』：書き込む範囲の列数
    ' 第４引数（オプション）『ROOT(RowOffsetOfTemplate)』
+   '
+   ' 第２引数『Ary』が１次元配列のときは１行ではなくて１列配列
+   ' として取り扱うようにしてみたが、うまく行っていない。
+   ' 現状では、第２引数は、必ず２次元配列であること。
    '
    ' ▼範囲を拡張して範囲内にあるセルの内容を消去
    Dim c0 As Long
@@ -778,7 +822,24 @@ Private Sub PrintArrayOnNamedRange(strName As String, _
    ' ┗・・・書き込む行数（配列の行数）で
    Set R_n = R_n.Resize(rw, 1)
    ' ┗・・・表の更新する範囲を決める。１列のみ。
-   For c = LBound(Ary, 2) To UBound(Ary, 2)
+   '
+   Dim Lc As Long
+   Dim Uc As Long
+   Dim A1 As Boolean
+   On Error GoTo ARY1D
+   Lc = LBound(Ary, 2)
+   Uc = UBound(Ary, 2)
+   A1 = False
+   GoTo ARY1DEND
+ARY1D:
+   Lc = 1
+   Uc = 1
+   A1 = True
+ARY1DEND:
+
+ARYEND:
+   ' For c = LBound(Ary, 2) To UBound(Ary, 2)
+   For c = Lc To Uc
       ' ┗・・・配列の最初の列から最後の列まで
       Set R_0 = R_n.Resize(1, 1).Offset(ROOT, (c - 1))
       If ROOT < 0 Then
@@ -799,7 +860,11 @@ Private Sub PrintArrayOnNamedRange(strName As String, _
       R_c.Borders.LineStyle = bls
       ' ┗・・・列ごとに書式を設定する
       For r = LBound(Ary, 1) To UBound(Ary, 1)
-         AryR(r, 1) = Ary(r, c)
+         If A1 Then
+            AryR(r, 1) = Ary(r)
+         Else
+            AryR(r, 1) = Ary(r, c)
+         End If
       Next r
       R_n.Offset(0, (c - 1)) = AryR
    Next c
