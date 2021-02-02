@@ -94,6 +94,7 @@ Sub 組織集計1列初期化()
    '
    ' 名前『組織集計』で名付けた範囲をもとに
    ' 名前『Range_組織集計１列』で名付けた範囲を構成する。
+   ' まず、既存の領域をクリアするようにした。既存の領域が大きくても機能する。
    '
    Dim strName As String
    strName = "Range_組織辞書"
@@ -102,13 +103,21 @@ Sub 組織集計1列初期化()
        ThisWorkbook.Names(strName).RefersToRange
    Dim str組織辞書() As Variant
    str組織辞書 = Range_組織辞書.Value
+   '┗所定行数×１列の配列
    Dim j As Long
    j = UBound(str組織辞書, 1)
    strName = "組織集計"
    Dim Range_組織集計1列 As Range
+   Dim r0 As Long
+   Dim r1 As Long
    Set Range_組織集計1列 = _
-       ThisWorkbook.Names(strName).RefersToRange.Resize(j, 1)
-   Range_組織集計1列.Clear
+       ThisWorkbook.Names(strName).RefersToRange
+   ' r0 = Range_組織集計1列.Row
+   ' r1 = 列の最終行(strName)
+   ' Set Range_組織集計1列 = Range_組織集計1列.Resize((r1 - r0 + 1), 1)
+   ' Range_組織集計1列.Clear
+   Set Range_組織集計1列 = Range_組織集計1列.Resize(j, 1)
+   Call ClearColumnRowEnd(Range_組織集計1列)
    Range_組織集計1列.Font.Name = "BIZ UDゴシック"
    ' Range_組織集計1列.Value = str組織辞書
    Range_組織集計1列 = str組織辞書
@@ -479,9 +488,40 @@ Private Sub 組織集計個別審査件数更新(ByRef 組織別個別審査件数() As Long)
    ' Set R組織集計件数列 = Range(Cells(r0, c0), Cells(r1, c0))
    ' ┣・・・名付けた範囲をもとに新たな範囲を指定する。
    Set R組織集計件数列 = R組織集計.Offset(0, 2).Resize((r1 - r0 + 1), 1)
-   R組織集計件数列.Clear
+   ' R組織集計件数列.Clear
+   ' 問答無用で、いまあるところを最後まで消す、というやつにしたほうがいいだろう
+   Call ClearColumnRowEnd(R組織集計件数列)
    R組織集計件数列.Font.Name = "BIZ UDゴシック"
    R組織集計件数列 = 組織別個別審査件数
+End Sub
+
+Sub ClearColumnRowEnd(ByVal Ro1C As Range)
+   ' 指定された範囲の一番上のセルから空白なしで連続する範
+   ' 囲のセルをクリアする
+   ' 第１引数：Ro1C - Range of 1 Column - レンジ型の範囲
+   ' Ro1Cの一番上のセルから、列の最終行までの範囲の内容を
+   ' クリアする。
+   ' 
+   Dim r0 As Long
+   Dim r1 As Long
+   r0 = Ro1C.Row
+   r1 = 列の最終行_Range(Ro1C)
+   Set Ro1C = Ro1C.Resize((r1 - r0 + 1), 1)
+   Ro1C.Clear
+End Sub
+
+Sub FillColumnRowEnd(ByVal Ro1C As Range, ByRef Ary As Variant)
+   ' 指定された範囲の一番上のセルから空白なしで連続する範
+   ' 囲のセルに、複数行×１列の配列を書き込む
+   ' 第１引数：Ro1C - Range of 1 Column - レンジ型の範囲
+   ' Ro1Cの一番上のセルから、
+   ' 第２引数：Ary 複数行×１列の配列を書き込む
+   ' 
+   Dim rs As Long
+   rs = UBound(Ary, 1) - LBound(Ary, 1) + 1
+   Set Ro1C = Ro1C.Resize(rs, 1)
+   Ro1C.Font.Name = "BIZ UDゴシック"
+   Ro1C = Ary
 End Sub
 
 ' 組織別個別審査件数集計　の中で、承認記録を読み取るために呼び出す
