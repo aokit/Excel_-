@@ -284,7 +284,7 @@ Sub 仕向地別集計()
    ' Call 仕向地別名回数表示("仕向地別名回数")
 End Sub
 
-Private Sub 仕向地集計(strName As String, _
+Private Sub 仕向地集計(strNameD As String, _
                        iC_仕向地 As Long, _
                        iC_金額 As Long, _
                        ByRef dicDIN As Dictionary, _
@@ -297,6 +297,13 @@ Private Sub 仕向地集計(strName As String, _
    ' また、表に戻す際に、１次元だと行になってしまうので、２次元の１列配列に
    ' 移し替えている。
    '
+   ' 第１引数：strNameD：の名前が与えられた範囲から承認データを読み取る。
+   ' 第２引数：iC_仕向地：承認データにおける仕向地のカラム番号
+   ' 第３引数：iC_金額：承認データにおける金額のカラム番号
+   ' 第４引数：dicDIN：仕向地の別名辞書
+   ' 第５引数：aryNTM：（返す値）仕向地名・合計金額・合計回数の表
+   ' 第６引数：aryYAD：（返す値）割当解決ができなかった仕向地の表
+   ' 
    ' ("承認記録", 11, 10, dic仕向番号, ary集計名件数金額)
    ' 第６引数：未割り当て仕向地を返す（）
    '
@@ -309,7 +316,8 @@ Private Sub 仕向地集計(strName As String, _
    nYAD = 0
    Dim str承認記録() As String
    ' Call 承認記録読み取り(str承認記録)
-   Call NamedRangeSQ2ArrStr("承認記録", str承認記録)
+   ' Call NamedRangeSQ2ArrStr("承認記録", str承認記録)
+   Call NamedRangeSQ2ArrStr(strNameD, str承認記録)
    ' Stop
    ' ここから　配列　str承認記録　に対して　▼３／▼５を参考にして集計処理を行う。
    Dim U2 As Long
@@ -363,6 +371,101 @@ Private Sub 仕向地集計(strName As String, _
    Next j
    ' Stop
    '
+End Sub
+
+' ┏━━
+' ┃▼８
+'
+Sub 許可特例等抽出()
+   Dim str承認記録() As String
+   Call 承認記録読み取り(str承認記録)
+   Dim U2 As Long
+   U2 = UBound(str承認記録, 1)
+
+   Dim A1() As String ' 包括許可
+   Dim A2() As String ' 包括許可（貨物）
+   Dim A3() As String ' 包括許可（役務）
+   Dim A4() As String ' 少額特例
+   Dim A5() As String ' 公知特例
+   Dim A6() As String ' 該当国内
+
+   ReDim A1(1 To U2)
+   ReDim A2(1 To U2)
+   ReDim A3(1 To U2)
+   ReDim A4(1 To U2)
+   ReDim A5(1 To U2)
+   ReDim A6(1 To U2)
+   
+   Dim i1 As Long
+   Dim i2 As Long
+   Dim i3 As Long
+   Dim i4 As Long
+   Dim i5 As Long
+   Dim i6 As Long
+
+   i1 = 1
+   i2 = 1
+   i3 = 1
+   i4 = 1
+   i5 = 1
+   i6 = 1
+   
+   Dim c1 As String
+   Dim c17 As String
+   Dim c18 As String
+   Dim c19 As String
+   Dim c20 As String
+   Dim q As Boolean
+
+   For i = 2 To U2
+      q = False
+      If p有効期間(str承認記録(i, 2)) Then
+         c1 = str承認記録(i, 1)
+         c17 = str承認記録(i, 17)
+         c18 = str承認記録(i, 18)
+         c19 = str承認記録(i, 19)
+         c20 = str承認記録(i, 20)
+         If (c18 = "包括許可適用") Or (c20 = "包括許可適用") Then
+            A1(i1) = c1
+            i1 = i1 + 1
+            q = True
+         End If
+         If (c18 = "包括許可適用") Then
+            A2(i2) = c1
+            i2 = i2 + 1
+            q = True
+         End If
+         If (c20 = "包括許可適用") Then
+            A3(i3) = c1
+            i3 = i3 + 1
+            q = True
+         End If
+         If (Right(c18, 2) = "特例") Then
+            A4(i4) = c1
+            i4 = i4 + 1
+            q = True
+         End If
+         If (Right(c20, 2) = "特例") Then
+            A5(i5) = c1
+            i5 = i5 + 1
+            q = True
+         End If
+         If (Left(c17, 2) = "該当") Or (Left(c19, 2) = "該当") And (Not q) Then
+            A6(i6) = c1
+            i6 = i6 + 1
+         End If
+      End If
+   Next i
+
+   ReDim Preserve A1(i1 -1)
+   ReDim Preserve A2(i2 -1)
+   ReDim Preserve A3(i3 -1)
+   ReDim Preserve A4(i4 -1)
+   ReDim Preserve A5(i5 -1)
+   ReDim Preserve A6(i6 -1)
+
+   Stop
+   
 End Sub
 
 '
