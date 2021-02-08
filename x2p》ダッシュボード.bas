@@ -166,7 +166,29 @@ Sub 組織別個別審査件数集計()
       ' Debug.Print 組織別個別審査件数(i, 1)
    Next i
    Call 組織集計個別審査件数更新(組織別個別審査件数)
+   '
+   ' Stop
+   '
 End Sub
+
+'┗━━━━━━
+Function PickHeadWord(ByRef dicSyn As Dictionary, _
+                 ByVal word As String) As String
+   ' 番号で類別された類義語辞書の見出し語を返す
+   '
+   PickHeadWord = ""
+   If Not dicSyn.Exists(word) Then Exit Function
+   Dim ix As Long
+   ix = dicSyn(word)
+   Dim i  As Long
+   For i = 0 To dicSyn.Count - 1
+      If dicSyn(dicSyn.Keys(i)) = ix Then
+         PickHeadWord = dicSyn.Keys(i)
+         Exit For
+      End If
+   Next i   
+End Function
+'┏━━━━━━
 
 ' ┏━━
 ' ┃▼４
@@ -280,7 +302,7 @@ Sub 仕向地別集計()
    ' Stop
    ' Call PrintArrayOnNamedRange("未割当別名", aryT, 1)
    ' 
-   Stop
+   ' Stop
    ' Call 仕向地別名回数表示("仕向地別名回数")
 End Sub
 
@@ -377,10 +399,18 @@ End Sub
 ' ┃▼８
 '
 Sub 許可特例等抽出()
+   '
+   '
+   ' ▼３のコードを流用
    Dim str承認記録() As String
    Call 承認記録読み取り(str承認記録)
    Dim U2 As Long
    U2 = UBound(str承認記録, 1)
+
+   Dim dic組織辞書 As New Dictionary
+   Dim U1 As Long
+   Call SingleHomeDict_namedRange("Range_組織辞書", U1, dic組織辞書, 0)
+   Dim 申請者所属 As String
 
    Dim A1() As String ' 包括許可
    Dim A2() As String ' 包括許可（貨物）
@@ -388,13 +418,19 @@ Sub 許可特例等抽出()
    Dim A4() As String ' 少額特例
    Dim A5() As String ' 公知特例
    Dim A6() As String ' 該当国内
-
+   Dim A1A() As String
+   Dim A4A() As String
+   Dim A1V() As Variant
+   Dim A4V() As variant
+      
    ReDim A1(1 To U2)
    ReDim A2(1 To U2)
    ReDim A3(1 To U2)
    ReDim A4(1 To U2)
    ReDim A5(1 To U2)
    ReDim A6(1 To U2)
+   ReDim A1A(1 To U2, 1 To 7)
+   ReDim A4A(1 To U2, 1 To 7)
    
    Dim i1 As Long
    Dim i2 As Long
@@ -417,6 +453,8 @@ Sub 許可特例等抽出()
    Dim c20 As String
    Dim q As Boolean
 
+   Dim yen As Long
+   
    For i = 2 To U2
       q = False
       If p有効期間(str承認記録(i, 2)) Then
@@ -427,6 +465,21 @@ Sub 許可特例等抽出()
          c20 = str承認記録(i, 20)
          If (c18 = "包括許可適用") Or (c20 = "包括許可適用") Then
             A1(i1) = c1
+            ' ┏＜依存＞承認記録のフィールド構造
+            A1A(i1, 1) = str承認記録(i, 1) ' 管理番号
+            A1A(i1, 2) = str承認記録(i, 7) ' 件名
+            A1A(i1, 3) = str承認記録(i, 11) ' 仕向地
+            A1A(i1, 4) = str承認記録(i, 13) ' 顧客・契約先
+            A1A(i1, 5) = str承認記録(i, 14) ' 最終需要者
+            ' A1A(i1, 6) = str承認記録(i, 15) ' 申請者所属＿本部変換前
+            申請者所属 = str承認記録(i, 15) ' 申請者所属＿本部変換前
+            yen = str承認記録(i, 10) ' 金額＿円
+            A1A(i1, 7) = CStr(CLng(yen) / 1000)
+            If (dic組織辞書.Exists(申請者所属)) Then
+               A1A(i1, 6) = PickHeadWord(dic組織辞書, 申請者所属)
+            Else
+               A1A(i1, 6) = "*"
+            End If
             i1 = i1 + 1
             q = True
          End If
@@ -440,8 +493,23 @@ Sub 許可特例等抽出()
             i3 = i3 + 1
             q = True
          End If
-         If (Right(c18, 2) = "特例") Then
+         If (Right(c18, 2) = "特例") Then ' 少額特例
             A4(i4) = c1
+            ' ┏＜依存＞承認記録のフィールド構造
+            A4A(i4, 1) = str承認記録(i, 1) ' 管理番号
+            A4A(i4, 2) = str承認記録(i, 7) ' 件名
+            A4A(i4, 3) = str承認記録(i, 11) ' 仕向地
+            A4A(i4, 4) = str承認記録(i, 13) ' 顧客・契約先
+            A4A(i4, 5) = str承認記録(i, 14) ' 最終需要者
+            ' A1A(i1, 6) = str承認記録(i, 15) ' 申請者所属＿本部変換前
+            申請者所属 = str承認記録(i, 15) ' 申請者所属＿本部変換前
+            yen = str承認記録(i, 10) ' 金額＿円
+            A4A(i4, 7) = CStr(CLng(yen) / 1000)
+            If (dic組織辞書.Exists(申請者所属)) Then
+               A4A(i4, 6) = PickHeadWord(dic組織辞書, 申請者所属)
+            Else
+               A1A(i4, 6) = "*"
+            End If
             i4 = i4 + 1
             q = True
          End If
@@ -450,7 +518,7 @@ Sub 許可特例等抽出()
             i5 = i5 + 1
             q = True
          End If
-         If (Left(c17, 2) = "該当") Or (Left(c19, 2) = "該当") And (Not q) Then
+         If ((Left(c17, 2) = "該当") Or (Left(c19, 2) = "該当")) And (Not q) Then
             A6(i6) = c1
             i6 = i6 + 1
          End If
@@ -463,8 +531,73 @@ Sub 許可特例等抽出()
    ReDim Preserve A4(1 To i4 - 1)
    ReDim Preserve A5(1 To i5 - 1)
    ReDim Preserve A6(1 To i6 - 1)
+   ReDim A1V(1 To i1 - 1, 1 To 7)
+   Dim r As Long
+   Dim c As Long
+   For r = 1 To i1 - 1
+      For c = 1 To 7
+         A1V(r, c) = A1A(r, c)
+      Next c
+   Next r
+   ReDim A4V(1 To i4 - 1, 1 To 7)
+   For r = 1 To i4 - 1
+      For c = 1 To 7
+         A4V(r, c) = A4A(r, c)
+      Next c
+   Next r
+   
+   ' Stop
 
-   Stop
+   Dim AA() As Variant
+   Dim iz As Long
+   iz = 0
+   If iz < (i1 - 1) Then iz = i1 - 1
+   If iz < (i2 - 1) Then iz = i2 - 1
+   If iz < (i3 - 1) Then iz = i3 - 1
+   If iz < (i4 - 1) Then iz = i4 - 1
+   If iz < (i5 - 1) Then iz = i5 - 1
+   If iz < (i6 - 1) Then iz = i6 - 1
+   ReDim AA(1 To iz, 1 To 6)
+   For i = 1 To iz
+      If UBound(A1, 1) < i Then
+         AA(i, 1) = ""
+      Else
+         AA(i, 1) = A1(i)
+      End If
+      If UBound(A2, 1) < i Then
+         AA(i, 2) = ""
+      Else
+         AA(i, 2) = A2(i)
+      End If
+      If UBound(A3, 1) < i Then
+         AA(i, 3) = ""
+      Else
+         AA(i, 3) = A3(i)
+      End If
+      If UBound(A4, 1) < i Then
+         AA(i, 4) = ""
+      Else
+         AA(i, 4) = A4(i)
+      End If
+      If UBound(A5, 1) < i Then
+         AA(i, 5) = ""
+      Else
+         AA(i, 5) = A5(i)
+      End If
+      If UBound(A6, 1) < i Then
+         AA(i, 6) = ""
+      Else
+         AA(i, 6) = A6(i)
+      End If
+   Next i
+
+   ' Stop
+
+   Call PrintArrayOnNamedRange("該当取引",AA,6,-4)
+   Call PrintArrayOnNamedRange("特一包括┏",A1V,7,-4)
+   Call PrintArrayOnNamedRange("少額特例┏",A4V,7,-4)
+   ' ┗なんか、Root からFormat持ってこられてないような・・・
+   '   PrintArrayOnNamedRangeのバグ？
    
 End Sub
 
@@ -912,7 +1045,7 @@ End Sub
 
 Private Sub PrintArrayOnNamedRange(strName As String, _
                                    ByRef Ary() As Variant, _
-                                   cols As Long, _
+                                   Optional cols As Long = 1, _
                                    Optional ROOT As Long = 0)
    '
    ' 配列の内容を名付けた範囲に書き込む。列ごとの書式を設定する
@@ -922,10 +1055,10 @@ Private Sub PrintArrayOnNamedRange(strName As String, _
    ' 範囲の行数は、名付けたセルの下方向（行番号の増える方向）に
    ' 内容を持つセルの連続する範囲で拡張される。
    ' 範囲の列数は、『cols』で与える。
-   ' 『cols』が与えない（デフォルト値０が与えられた）ときは行の
-   ' 範囲内の最も長い（列番号の増える方向で内容を持つセルの連続
-   ' する）範囲で拡張される。
-   ' 列の拡張は未実装。
+   ' x 『cols』が与えない（デフォルト値０が与えられた）ときは行の
+   ' x 範囲内の最も長い（列番号の増える方向で内容を持つセルの連続
+   ' x する）範囲で拡張される。
+   ' x ┗このような列の拡張は未実装。
    ' 
    ' 第１引数『strName』：書き込む範囲につけた名前
    ' 第２引数    『Ary』：書き込む内容を保持した配列
