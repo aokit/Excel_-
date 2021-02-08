@@ -457,12 +457,12 @@ Sub ‹–‰Â“Á—á“™’Šo()
       End If
    Next i
 
-   ReDim Preserve A1(i1 -1)
-   ReDim Preserve A2(i2 -1)
-   ReDim Preserve A3(i3 -1)
-   ReDim Preserve A4(i4 -1)
-   ReDim Preserve A5(i5 -1)
-   ReDim Preserve A6(i6 -1)
+   ReDim Preserve A1(1 To i1 - 1)
+   ReDim Preserve A2(1 To i2 - 1)
+   ReDim Preserve A3(1 To i3 - 1)
+   ReDim Preserve A4(1 To i4 - 1)
+   ReDim Preserve A5(1 To i5 - 1)
+   ReDim Preserve A6(1 To i6 - 1)
 
    Stop
    
