@@ -288,6 +288,27 @@ Sub 仕向地別集計()
    ' Stop
    'Call PrintArrayOnNamedRange("未割当別名", ary集計名件数金額, 1)
    '
+   ' ソートし、所定の範囲に記入
+   ' 
+   Call 降順ソート(ary集計名件数金額, 2) '件数降順
+   Dim ary集計名件数() As Variant
+   ReDim ary集計名件数(1 To nClass, 1 To 2)
+   For i = 1 To nClass
+      ary集計名件数(i, 1) = ary集計名件数金額(i, 1)
+      ary集計名件数(i, 2) = ary集計名件数金額(i, 2)
+   Next i
+   Call PrintArrayOnNamedRange("仕向地件数＿トップ", ary集計名件数, 2, -4)
+   
+   Call 降順ソート(ary集計名件数金額, 3) '金額降順
+   Dim ary集計名金額() As Variant
+   ReDim ary集計名金額(1 To nClass, 1 To 2)
+   For i = 1 To nClass
+      ary集計名金額(i, 1) = ary集計名件数金額(i, 1)
+      ary集計名金額(i, 2) = ary集計名件数金額(i, 3) / 1000
+   Next i
+   Call PrintArrayOnNamedRange("仕向地金額＿トップ", ary集計名金額, 2, -4)
+
+   '
    Call PrintArrayOnNamedRange("未割当別名", ary未割当仕向, 1)
    'Call PrintArrayOnNamedRange("未割当別名", Transpose(ary未割当仕向), 1)
    ' Dim aryT As Variant
