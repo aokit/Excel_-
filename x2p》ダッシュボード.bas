@@ -406,12 +406,19 @@ Private Sub 仕向地集計(strNameD As String, _
          End If
       End If
    Next i
-   ReDim aryYAD(1 To nYAD, 1 To 1)
-   ' ┗・・・未割当仕向の配列で書き込んでいないところを切り落とす
-   ' 　　　　名付け範囲『別名回数』に０回として表示する対象
-   For j = 1 To nYAD
-      aryYAD(j, 1) = TaryYAD(j)
-   Next j
+   If nYAD = 0 Then
+      ' 未割当仕向がまったく無かったとき、配列もなくしてしまうと例外処理
+      ' が面倒なので、特別に１要素で空文字列の配列にしておく。
+      ReDim aryYAD(1 To 1, 1 To 1)
+      aryYAD(1, 1) = ""
+   Else
+      ReDim aryYAD(1 To nYAD, 1 To 1)
+      ' ┗・・・未割当仕向の配列で書き込んでいないところを切り落とす
+      ' 　　　　名付け範囲『別名回数』に０回として表示する対象
+      For j = 1 To nYAD
+         aryYAD(j, 1) = TaryYAD(j)
+      Next j
+   End If
    ' Stop
    '
 End Sub
