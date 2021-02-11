@@ -213,3 +213,10 @@ Function range_連続列最大行_range(R_n As Range, _
    Set range_連続列最大行_range = R_n
 End Function
 
+Function range_連続列最大行_namedrange(strRangeName As String) as Range
+   ' 名前をつけた左上セルから、不定列数の連続行の範囲に拡張して範囲を返す
+   Dim R_n As Range
+   Set R_n = ThisWorkbook.Names(strRangeName).RefersToRange
+   ' Set R_n =...
+   Set range_連続列最大行_namedrange = range_連続列最大行_range(R_n)
+End Function

@@ -133,6 +133,12 @@ Sub 組織別個別審査件数集計()
    Dim dic組織辞書 As New Dictionary
    Dim U1 As Long
    If False Then 'True then
+      ' Unused
+      ' 以下の True節 は使われなくなったはず。リファクタリングでバサッと
+      ' 消せるように以下のアサートの残す。
+      Debug.Print("使われなくなったTrue節が実行されました。")
+      Exit Sub
+      '
       Dim str組織辞書() As String
       Call 組織辞書読み取り(str組織辞書)
       Call 組織辞書構成(str組織辞書, dic組織辞書)
@@ -437,7 +443,13 @@ Sub 許可特例等抽出()
 
    Dim dic組織辞書 As New Dictionary
    Dim U1 As Long
-   Call SingleHomeDict_namedRange("Range_組織辞書", U1, dic組織辞書, 0)
+
+   If False Then
+      Call SingleHomeDict_namedRange("Range_組織辞書", U1, dic組織辞書, 0)
+   Else
+      Call SingleHomeDict_namedRange("組織辞書┏", U1, dic組織辞書, 0)
+   End If
+   
    Dim 申請者所属 As String
 
    Dim A1() As String ' 包括許可
@@ -828,6 +840,11 @@ End Sub
 ' 組織別個別審査件数集計　の中で、組織辞書を読み取るために呼び出す
 '
 Private Sub 組織辞書読み取り(ByRef str組織辞書() As String)
+   ' Unused
+   ' この関数は使われなくなったはず。確認のために以下にアサートする
+   ' ようにしておく。
+   Debug.Print("使われなくなった関数が呼ばれました：組織辞書読み取り")
+   Exit Sub
    '
    ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
    ' 『Range_組織辞書』と名前付けした範囲を読み取り：
@@ -1254,10 +1271,21 @@ End Sub
 ' ┃┗
 
 Private Sub 組織略称クリア()
+   Dim 組織辞書┏ As Range
+   ' Set 組織辞書┏ = range_連続列最大行_namedrange（"組織辞書┏"）
+   ' 組織辞書┏.Clear
+   range_連続列最大行_namedrange（"組織辞書┏"）.Clear
+   Exit Sub
+   '
+   ' Unused
+   ' 以下は、使われなくなった
    Dim strName As String
    strName = "Range_組織辞書"
    Dim Range_組織辞書 As Range
    On Error Resume Next
+   ' Clear を呼びつつ Range を返して再代入、ってのが間違い。
+   ' 間違いだったので、エラーが起きているのを On Error で
+   ' 囲っている、という間違い・・・。なんとも。
    Set Range_組織辞書 = _
        ThisWorkbook.Names(strName).RefersToRange.Clear
    Call updateRDofNamedRange(strName, 1, 1)
