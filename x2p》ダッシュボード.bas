@@ -105,9 +105,12 @@ Sub 組織辞書初期化()
    '
    ' ３┏・・・名付けした範囲に配列を書き出し範囲を広げて名付けを更新する
    Dim strName As String
-   strName = "Range_組織辞書"
-   Call Arr2ReNamedRange(str組織辞書(), strName)
-   '
+   ' strName = "Range_組織辞書"
+   ' Call Arr2ReNamedRange(str組織辞書(), strName)
+   ' ＜↓変更↓＞
+   strName = "組織辞書┏"
+   Call PrintArrayOnNamedRange(strName, str組織辞書)
+
 End Sub
 
 ' ┏━━
@@ -1117,7 +1120,7 @@ End Sub
 
 Private Sub PrintArrayOnNamedRange(strName As String, _
                                    ByRef Ary() As Variant, _
-                                   Optional cols As Long = 1, _
+                                   Optional cols As Long = 0, _
                                    Optional ROOT As Long = 0)
    '
    ' 配列の内容を名付けた範囲に書き込む。列ごとの書式を設定する
@@ -1131,6 +1134,11 @@ Private Sub PrintArrayOnNamedRange(strName As String, _
    ' x 範囲内の最も長い（列番号の増える方向で内容を持つセルの連続
    ' x する）範囲で拡張される。
    ' x ┗このような列の拡張は未実装。
+   ' ＜↓変更↓＞
+   ' セルに記載する列数の指定である『cols』が与えられない（デフォルト
+   ' 値０が与えられた）ときは配列全体（配列がもつ列数のすべて）を記載
+   ' する。与えられる Ary は２次元配列なので、２次元めのインデクスの
+   ' 取りうる値の種類数が cols になる。
    ' 
    ' 第１引数『strName』：書き込む範囲につけた名前
    ' 第２引数    『Ary』：書き込む内容を保持した配列
@@ -1141,6 +1149,9 @@ Private Sub PrintArrayOnNamedRange(strName As String, _
    ' として取り扱うようにしてみたが、うまく行っていない。
    ' 現状では、第２引数は、必ず２次元配列であること。
    '
+   If cols = 0 Then
+      cols = UBound(Ary, 2) - LBound(Ary, 2) + 1
+   End If
    ' ▼範囲を拡張して範囲内にあるセルの内容を消去
    Dim c0 As Long
    Dim c1 As Long
