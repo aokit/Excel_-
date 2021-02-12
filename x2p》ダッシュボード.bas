@@ -127,21 +127,40 @@ Sub 組織集計1列初期化()
    ' まず、既存の領域をクリアするようにした。既存の領域が大きくても機能する。
    '
    Dim strName As String
-   strName = "Range_組織辞書"
-   Dim Range_組織辞書 As Range
-   Set Range_組織辞書 = _
-       ThisWorkbook.Names(strName).RefersToRange
-   Dim str組織辞書() As Variant
-   str組織辞書 = Range_組織辞書.Value
+   ' strName = "Range_組織辞書"
+   ' Dim Range_組織辞書 As Range
+   ' Set Range_組織辞書 = _
+   '     ThisWorkbook.Names(strName).RefersToRange
+   ' Dim str組織辞書() As Variant
+   ' str組織辞書 = Range_組織辞書.Value
    '┗所定行数×１列の配列
+   ' ＜↓変更↓＞
+   strName = "組織辞書┏"
+   Dim rh As long
+   Dim 組織辞書 As Range
+   Set 組織辞書 = ThisWorkbook.Names(strName).RefersToRange
+   rh = Range_列の最終行_Range(組織辞書).Rows.Count
+   Set 組織辞書 = 組織辞書.Resize(rh,1)
+   Dim str組織辞書() As Variant
+   str組織辞書 = 組織辞書.Value
+   '┗所定行数×１列の配列
+   
+   ' Dim j As Long
+   ' j = UBound(str組織辞書, 1)
+   ' strName = "組織集計"
+   ' Dim Range_組織集計1列 As Range
+   ' Dim r0 As Long
+   ' Dim r1 As Long
+   ' Set Range_組織集計1列 = _
+   '     ThisWorkbook.Names(strName).RefersToRange
+   ' ＜↓変更↓＞
    Dim j As Long
    j = UBound(str組織辞書, 1)
    strName = "組織集計"
    Dim Range_組織集計1列 As Range
-   Dim r0 As Long
-   Dim r1 As Long
    Set Range_組織集計1列 = _
        ThisWorkbook.Names(strName).RefersToRange
+
    ' r0 = Range_組織集計1列.Row
    ' r1 = 列の最終行(strName)
    ' Set Range_組織集計1列 = Range_組織集計1列.Resize((r1 - r0 + 1), 1)
