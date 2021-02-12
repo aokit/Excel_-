@@ -194,7 +194,9 @@ Sub 組織別個別審査件数集計()
       U1 = UBound(str組織辞書, 1)
    Else
       ' 以下のに置き換えてみる
-      Call SingleHomeDict_namedRange("Range_組織辞書", U1, dic組織辞書, 0)
+      ' Call SingleHomeDict_namedRange("Range_組織辞書", U1, dic組織辞書, 0)
+      '＜↓変更↓＞
+      Call SingleHomeDict_namedRange("組織辞書┏", U1, dic組織辞書, 0)
    End If
    '
    Dim 組織別個別審査件数() As Long
@@ -494,7 +496,9 @@ Sub 許可特例等抽出()
    Dim U1 As Long
 
    If False Then
-      Call SingleHomeDict_namedRange("Range_組織辞書", U1, dic組織辞書, 0)
+      ' 使われなくなった（範囲の変わる　Range_組織辞書　ではなく
+      ' 単一セルの　組織辞書┏　を使うようにした）
+      ' Call SingleHomeDict_namedRange("Range_組織辞書", U1, dic組織辞書, 0)
    Else
       Call SingleHomeDict_namedRange("組織辞書┏", U1, dic組織辞書, 0)
    End If
@@ -903,31 +907,43 @@ Private Sub 組織辞書読み取り(ByRef str組織辞書() As String)
    ' 組織辞書のシートは手作業での追記も想定されている。そのため
    ' 領域の大きさを確認（wr, wc）する必要があるので確認。
    Dim strName As String
-   strName = "Range_組織辞書"
-   Dim r0 As Long
-   Dim c0 As Long
-   Dim rz As Long
-   Dim cz As Long
-   Dim wr As Long
-   Dim wc As Long
+   ' strName = "Range_組織辞書"
+   ' ＜↓変更↓＞
+   strName = "組織辞書┏"
+
+   ' Dim r0 As Long
+   ' Dim c0 As Long
+   ' Dim rz As Long
+   ' Dim cz As Long
+   ' Dim wr As Long
+   ' Dim wc As Long
+   ' Dim R組織辞書 As Range
+   ' Set R組織辞書 = ThisWorkbook.Names(strName).RefersToRange
+   ' r0 = R組織辞書.Row
+   ' c0 = R組織辞書.Column
+   ' rz = 列の最終行(strName)
+   ' cz = 行の最終列(strName)
+   ' wr = rz - r0 + 1
+   ' wc = cz - c0 + 1
+   ' Set R組織辞書 = R組織辞書.Resize(wr, wc)
+   ' ＜↓変更↓＞
    Dim R組織辞書 As Range
-   Set R組織辞書 = ThisWorkbook.Names(strName).RefersToRange
-   r0 = R組織辞書.Row
-   c0 = R組織辞書.Column
-   rz = 列の最終行(strName)
-   cz = 行の最終列(strName)
-   wr = rz - r0 + 1
-   wc = cz - c0 + 1
-   Set R組織辞書 = R組織辞書.Resize(wr, wc)
+   Set R組織辞書 = range_連続列最大行_namedrange(strName)
+
    Dim V組織辞書() As Variant
    V組織辞書 = R組織辞書
    ' 引数として返す配列の大きさをここで設定
+   ' ＜↓変更↓＞
+   wr = R組織辞書.Rows.Count
+   wc = R組織辞書.Columns.Count
    ReDim str組織辞書(1 To wr, 1 To wc)
    For i = 1 To wr
       For j = 1 To wc
          str組織辞書(i, j) = V組織辞書(i, j)
       Next j
    Next i
+   Stop
+   '
 End Sub
 
 ' 組織別個別審査件数集計　のなかで　組織別辞書　を構成するために呼ぶ
@@ -1142,6 +1158,12 @@ Private Sub PrintArrayOnNamedRange(strName As String, _
                                    Optional cols As Long = 0, _
                                    Optional ROOT As Long = 0)
    '
+   ' 記入対象の配列と同じ大きさの範囲をいったん読み込む。『*』 以外
+   ' の文字がある要素を、記入対象の配列の要素で置き換える。
+   ' 『*』も含めて読み込み、『*』はそのままにして、配列全体を
+   ' そのまま書き出してもよいかも←変更予定
+   ' 
+   '
    ' 配列の内容を名付けた範囲に書き込む。列ごとの書式を設定する
    ' ことができる。列ごとの書式は、各列の書き込む範囲の上方向の
    ' セル（オフセットが ROOT で指定：負の値）に予め設定しておく。
@@ -1246,7 +1268,43 @@ ARYEND:
       Next r
       R_n.Offset(0, (c - 1)) = AryR
    Next c
+   '
 End Sub
+
+Private Sub PrintArrayOnNamedRange_2(strName As String, _
+                                   ByRef Ary() As Variant, _
+                                   Optional cols As Long = 0, _
+                                   Optional ROOT As Long = 0)
+'   フォーマット文字操作。連続列最大行の検出をつかって、書き出す範囲を指定して、ただし『*』のセルには何もしない（『*』のままにする）ということにしたい。
+End Sub
+
+' 設計中
+
+Function Ary1C_If_Ary1R(ByRef Ary As Variant) As Variant
+   ' 引数が１行Ｎ列（添字が１次元）の配列だったときだけ、
+   ' Ｎ行１列（添字が２次元）の配列に変換
+   ' そうでないときはそのまま
+   Dim LB As Long
+   Dim UB As Long
+   LB = LBound(Ary, 1)
+   UB = UBound(Ary, 1)
+   stop
+   '
+   On Error GoTo MAIN
+   LB = LBound(Ary, 2)
+   TransposeAry = Ary
+   Exit Function
+   '
+MAIN:
+   On Error GoTo 0
+   '
+   Dim vAry() As Variant
+   ReDim vAry(LB To UB, 1)
+   For i = LB To UB
+      vAry(i, 1) = Ary(i)
+   Next i
+   TransposeAry = vAry
+End Function
 
 ' 取引区分別個別審査件数集計　の中で、表の範囲を更新するために呼ぶ
 '
@@ -1335,7 +1393,7 @@ Private Sub 組織略称クリア()
    Exit Sub
    '
    ' Unused
-   ' 以下は、使われなくなった
+   ' 以下は、すべて、使われなくなった
    Dim strName As String
    strName = "Range_組織辞書"
    Dim Range_組織辞書 As Range
