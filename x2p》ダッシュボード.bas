@@ -226,6 +226,42 @@ Sub 組織別個別審査件数集計()
    '
    ' Stop
    '
+   Call 組織集計個別審査件数転記()
+End Sub
+
+Sub 組織集計個別審査件数転記()
+   Dim R_1 As Range
+   Dim R_2 As Range
+   Dim R_3 As range
+   Set R_1 = range_列の最終行_namedrange("組織集計")
+   Set R_2 = R_1.Offset(0, 2) ' 組織集計の集計値
+   Dim v1() As Variant
+   Dim v2() As Variant
+   Dim v3() As Variant ' - v3 は２次元配列であることを明示すること
+   ' 　　┗ここの『()』がないと、コンパイラが配列でないと判断してエラー。
+   v1 = R_1.value
+   v2 = R_2.value
+   Dim LB1 As Long
+   Dim UB1 As Long
+   LB1 = LBound(v1, 1)
+   UB1 = UBound(v1, 1)
+   If LB1 <> 1 Then Debug.Print("組織集計に異常があります。＠転記")
+   If LB1 <> LBound(v2, 1) Then Debug.Print("組織集計に異常があります。＠転記")
+   If UB1 <> UBound(v2, 1) Then Debug.Print("組織集計に異常があります。＠転記")
+   ReDim v3(1 To UB1, 1 To 2)
+   For i = 1 To UB1
+      v3(i, 1) = v1(i, 1)
+      v3(i, 2) = v2(i, 1)
+   Next i
+   ' Set R_3 = range_列の最終行_namederange("別表１").Offset(1,0)
+   
+   Set R_3 = ThisWorkBook.Names("別表１").RefersToRange.Offset(1, 0).Cells(1, 1)
+
+   ' Call PrintArrayOnRange(R_3, v3, 2)
+
+   ' Call PrintArrayOnRange(R_3, v3, 0)
+   Call PrintArrayOnRange(R_3, v3, -1)
+   
 End Sub
 
 '┗━━━━━━
@@ -805,21 +841,32 @@ End Sub
 '
 Private Sub 組織集計個別審査件数更新(ByRef 組織別個別審査件数() As Long)
    ' 組織集計個別審査件数クリア
-   Dim strName As String
-   strName = "組織集計"
-   Dim R組織集計 As Range
-   Set R組織集計 = ThisWorkbook.Names(strName).RefersToRange
-   r0 = R組織集計.Row
-   r1 = 列の最終行(strName)
-   ' c0 = R組織集計.Column + 2
    Dim R組織集計件数列 As Range
-   ' stop
-   ' Set R組織集計件数列 = Range(Cells(r0, c0), Cells(r1, c0))
-   ' ┣・・・名付けた範囲をもとに新たな範囲を指定する。
-   Set R組織集計件数列 = R組織集計.Offset(0, 2).Resize((r1 - r0 + 1), 1)
-   ' R組織集計件数列.Clear
-   ' 問答無用で、いまあるところを最後まで消す、というやつにしたほうがいいだろう
-   Call ClearColumnRowEnd(R組織集計件数列)
+   If False Then
+      ' 以下使わなくなった。
+      Dim strName As String
+      strName = "組織集計"
+      Dim R組織集計 As Range
+      Set R組織集計 = ThisWorkbook.Names(strName).RefersToRange
+      r0 = R組織集計.Row
+      r1 = 列の最終行(strName)
+      ' c0 = R組織集計.Column + 2
+      ' Dim R組織集計件数列 As Range
+      ' stop
+      ' Set R組織集計件数列 = Range(Cells(r0, c0), Cells(r1, c0))
+      ' ┣・・・名付けた範囲をもとに新たな範囲を指定する。
+      Set R組織集計件数列 = R組織集計.Offset(0, 2).Resize((r1 - r0 + 1), 1)
+      ' R組織集計件数列.Clear
+      ' 問答無用で、いまあるところを最後まで消す、というやつにしたほうがいいだろう
+      Call ClearColumnRowEnd(R組織集計件数列)
+      ' ---
+   Else
+      '＜↓変更↓＞
+      ' Dim R組織集計件数列 As Range
+      Set R組織集計件数列 = Range_列の最終行_namedrange("組織集計").Offset(0, 2)
+      R組織集計件数列.Clear
+   End If
+   ' ---
    R組織集計件数列.Font.Name = "BIZ UDゴシック"
    R組織集計件数列 = 組織別個別審査件数
 End Sub
@@ -1153,17 +1200,13 @@ Private Sub Copy1Dto2CAry(ByRef iAry() As Variant, _
    ' oAry() は列数が１の２次元配列である。
 End Sub
 
-Private Sub PrintArrayOnNamedRange(strName As String, _
-                                   ByRef Ary() As Variant, _
-                                   Optional cols As Long = 0, _
-                                   Optional ROOT As Long = 0)
+' ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    '
    ' 記入対象の配列と同じ大きさの範囲をいったん読み込む。『*』 以外
    ' の文字がある要素を、記入対象の配列の要素で置き換える。
    ' 『*』も含めて読み込み、『*』はそのままにして、配列全体を
    ' そのまま書き出してもよいかも←変更予定
-   ' 
-   '
+
    ' 配列の内容を名付けた範囲に書き込む。列ごとの書式を設定する
    ' ことができる。列ごとの書式は、各列の書き込む範囲の上方向の
    ' セル（オフセットが ROOT で指定：負の値）に予め設定しておく。
@@ -1190,56 +1233,105 @@ Private Sub PrintArrayOnNamedRange(strName As String, _
    ' として取り扱うようにしてみたが、うまく行っていない。
    ' 現状では、第２引数は、必ず２次元配列であること。
    '
-   If cols = 0 Then
-      cols = UBound(Ary, 2) - LBound(Ary, 2) + 1
-   End If
-   ' ▼範囲を拡張して範囲内にあるセルの内容を消去
-   Dim c0 As Long
-   Dim c1 As Long
-   Dim r0 As Long
-   Dim r1 As Long
+Private Sub PrintArrayOnNamedRange(strName As String, _
+                                   ByRef aAry() As Variant, _
+                                   Optional cols As Long = 0, _
+                                   Optional ROOT As Long = 0)
    Dim R_n As Range
-   Set R_n = ThisWorkbook.Names(strName).RefersToRange
-   r0 = R_n.Row
-   c0 = R_n.Column
-   c1 = c0 + cols - 1
-   ' ┗・・・列数が cols になるように最終カラム番号を拡張
-   r1 = 列の最終行(strName)
-   Set R_n = R_n.Resize((r1 - r0 + 1), (c1 - c0 + 1))
+   Set R_n = range_連続列最大行_namedrange(strName)
+   Call PrintArrayOnRange(R_n, aAry, cols ,ROOT)
+End Sub
+
+Private Sub PrintArrayOnRange(R_n As Range, _
+                              ByRef aAry() As Variant, _
+                              Optional cols As Long = 0, _
+                              Optional ROOT As Long = 0)
+   ' cols > 1 のとき：
+   ' 　　　┗cols で指定された列数をセルに書き出す
+   ' cols = 0 のとき：
+   ' 　　　┗与えられた配列の内容をすべてセルに書き出す
+   ' cols = -1 のとき：
+   ' 　　　┗すでに書き込まれている範囲のみセルに書き出す
+   ' ==フォーマット文字操作==
+   ' 名前で指定された範囲（セル）に連続列最大行の検出を適用して、書き出す
+   ' 範囲を列も行も確定する。
+   ' ただし『*』のセルには何もしない（『*』のままにする）
+   ' 
+   ' ▼１行Ｎ列の配列はＮ列１行に変換
+   Dim Ary As Variant
+   Ary = Ary1C_If_Ary1R(aAry)
+   ' ▼R_n を『書かれているまま』から変えるか
+   ' 　cols を特別に指定するか
+   ' 　┏左上の角のセルをもとにして連続列の最大行領域を対象として設定する
+   Set R_n = range_連続列最大行_range(R_n.Cells(1,1), 1)
+   Dim rowsA As Long
+   Dim rowsR As Long
+   rowsA = UBound(Ary, 1) - LBound(Ary, 1) + 1
+   rowsR = R_n.Rows.Count
+   If rowsA < rowsR Then rowsA = rowsR
+   Dim colsA As Long
+   colsA = UBound(Ary, 2) - LBound(Ary, 2) + 1
+   colsR = R_n.Columns.Count
+   If colsA < colsR Then colsA = colsR
+   '
+   Dim vAry As Variant
+   Dim pvAry As Boolean
+   pvAry = False
+   ' ▼colsで特殊な値が指定された場合の書き込む列数 cols の調整
+   ' 　と書き込む範囲の取得と消去
+   Select Case cols
+      Case 0
+         '┗Ary の大きさに合わせて範囲に書き込み
+         Set R_n = R_n.Resize(rowsA, colsA)
+      Case -1
+         '┗すでに書き込まれている範囲の大きさに合わせて書き込み
+         vAry = R_n.Value
+         pVary = True
+         rowsA = R_n.Rows.Count
+         colsA = R_n.Columns.Count
+      Case Else
+         '┗colsで指定された列数
+         Set R_n = R_n.Resize(rowsA, cols)
+         colsA = cols
+   End Select
    R_n.Clear
-   ' ┗・・・消すのはこの領域の最大の行数
    ' ▼列ごとに書式を指定しながら書き込み
-   Dim AryR As Variant
-   ReDim AryR(LBound(Ary, 1) To UBound(Ary, 1), 1 To 1)
+   Dim AryC As Variant
+   ' ReDim AryC(LBound(Ary, 1) To UBound(Ary, 1), 1 To 1)
+   ReDim AryC(1 To rowsA, 1 To 1)
    Dim r As Long
    Dim c As Long
    Dim nfl As String '.NumberFormatLocal
    Dim bls As Long   '.Borders.LineStyle
-   Dim rw As Long
-   Dim R_0 As Range  '書式のみもつセルを示す Range
+   ' Dim rw As Long
+   Dim R_0 As Range  '書式を有するセルを示す Range
    Dim R_c As Range  '書き込む範囲の列を示す Range
-   rw = UBound(Ary, 1) - LBound(Ary, 1) + 1
+   ' rw = UBound(Ary, 1) - LBound(Ary, 1) + 1
    ' ┗・・・書き込む行数（配列の行数）で
-   Set R_n = R_n.Resize(rw, 1)
+   ' Set R_n = R_n.Resize(rw, 1)
+   Set R_n = R_n.Resize(rowsA, 1)
    ' ┗・・・表の更新する範囲を決める。１列のみ。
    '
-   Dim Lc As Long
-   Dim Uc As Long
-   Dim A1 As Boolean
-   On Error GoTo ARY1D
-   Lc = LBound(Ary, 2)
-   Uc = UBound(Ary, 2)
-   A1 = False
-   GoTo ARY1DEND
-ARY1D:
-   Lc = 1
-   Uc = 1
-   A1 = True
-ARY1DEND:
-
-ARYEND:
+'   Dim Lc As Long
+'   Dim Uc As Long
+'   Dim A1 As Boolean
+'   On Error GoTo ARY1D
+'   Lc = LBound(Ary, 2)
+'   Uc = UBound(Ary, 2)
+'   A1 = False
+'   GoTo ARY1DEND
+'ARY1D:
+'   Lc = 1
+'   Uc = 1
+'   A1 = True
+'ARY1DEND:
+'
+'ARYEND:
    ' For c = LBound(Ary, 2) To UBound(Ary, 2)
-   For c = Lc To Uc
+'   Stop
+   
+   ' For c = Lc To Uc
+   For c = 1 To colsA
       ' ┗・・・配列の最初の列から最後の列まで
       Set R_0 = R_n.Resize(1, 1).Offset(ROOT, (c - 1))
       If ROOT < 0 Then
@@ -1259,26 +1351,35 @@ ARYEND:
       R_c.NumberFormatLocal = nfl
       R_c.Borders.LineStyle = bls
       ' ┗・・・列ごとに書式を設定する
-      For r = LBound(Ary, 1) To UBound(Ary, 1)
-         If A1 Then
-            AryR(r, 1) = Ary(r)
+      ' For r = LBound(Ary, 1) To UBound(Ary, 1)
+      For r = 1 To rowsA
+         If pvAry Then
+            If vAry(r, c) = "*" Then
+               AryC(r, 1) = "*"
+            Else
+               ' 範囲よりも配列が小さいときにはエラーになるが
+               ' エラーの場合のデフォルトとして空文字列を設定
+               AryC(r, 1) = ""
+               On Error Resume Next
+               AryC(r, 1) = Ary(r, c)
+               On Error GoTo 0
+            End If
          Else
-            AryR(r, 1) = Ary(r, c)
+'         If A1 Then
+'            AryC(r, 1) = Ary(r)
+'         Else
+            ' 範囲よりも配列が小さいときにはエラーになるが
+            ' エラーの場合のデフォルトとして空文字列を設定
+            AryC(r, 1) = ""
+            On Error Resume Next
+            AryC(r, 1) = Ary(r, c)
+            On Error GoTo 0
+'         End If
          End If
       Next r
-      R_n.Offset(0, (c - 1)) = AryR
+      R_n.Offset(0, (c - 1)) = AryC
    Next c
-   '
 End Sub
-
-Private Sub PrintArrayOnNamedRange_2(strName As String, _
-                                   ByRef Ary() As Variant, _
-                                   Optional cols As Long = 0, _
-                                   Optional ROOT As Long = 0)
-'   フォーマット文字操作。連続列最大行の検出をつかって、書き出す範囲を指定して、ただし『*』のセルには何もしない（『*』のままにする）ということにしたい。
-End Sub
-
-' 設計中
 
 Function Ary1C_If_Ary1R(ByRef Ary As Variant) As Variant
    ' 引数が１行Ｎ列（添字が１次元）の配列だったときだけ、
@@ -1288,11 +1389,10 @@ Function Ary1C_If_Ary1R(ByRef Ary As Variant) As Variant
    Dim UB As Long
    LB = LBound(Ary, 1)
    UB = UBound(Ary, 1)
-   stop
    '
    On Error GoTo MAIN
    LB = LBound(Ary, 2)
-   TransposeAry = Ary
+   Ary1C_If_Ary1R = Ary
    Exit Function
    '
 MAIN:
@@ -1303,7 +1403,7 @@ MAIN:
    For i = LB To UB
       vAry(i, 1) = Ary(i)
    Next i
-   TransposeAry = vAry
+   Ary1C_If_Ary1R = vAry
 End Function
 
 ' 取引区分別個別審査件数集計　の中で、表の範囲を更新するために呼ぶ

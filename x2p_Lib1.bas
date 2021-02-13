@@ -105,6 +105,16 @@ Function 列の最終行_range(ByRef R_n As Range, _
    列の最終行_range = R1
 End Function
 
+Function range_列の最終行_namedrange(strName As String, _
+                                     Optional k As Long = 1, _
+                                     Optional q As Long = 0) As Range
+   Dim R_n As range
+   Set R_n = ThisWorkbook.Names(strName).RefersToRange
+   Set range_列の最終行_namedrange = _
+        range_列の最終行_range(R_n, k, q)
+   '
+End Function
+
 Function range_列の最終行_range(ByRef R_n As Range, _
                                 Optional k As Long = 1, _
                                 Optional q As Long = 0) As Range
@@ -133,7 +143,7 @@ Function range_列の最終行_range(ByRef R_n As Range, _
    '┗戻り値が範囲つまり『オブジェクト』なので Set を使う！！
 End Function
 
-Function 行の最終列_range(R_n As Range, _
+Function 変更前_行の最終列_range(R_n As Range, _
                           Optional k As Long = 1, _
                           Optional q As Long = 0) As Long
    ' R_n - 開始するセルを含む範囲-Range-
@@ -156,6 +166,30 @@ Function 行の最終列_range(R_n As Range, _
    行の最終列_range = c1
 End Function
 
+Function 行の最終列_range(R_n As Range, _
+                          Optional k As Long = 1, _
+                          Optional q As Long = 1) As Long
+   ' R_n - 開始するセルを含む範囲-Range-
+   ' k - ＜オプション＞その範囲の中の行番号
+   ' q - ＜オプション＞何回目の空白を終わりとみなすか
+   ' ：指定されなければ 1 指定が 0 だと無制限。
+   Dim c1 As Long
+   Dim c2 As Long
+   Dim mc As Long
+   Dim s As Variant
+   mc = Columns.count ' 列の最大値・・・ここで飽和する。
+   Set s = R_n.Rows(k)
+   c1 = 0
+   c2 = s.Column
+   Do
+      c1 = c2
+      Set s = s.End(xlToRight)
+      c2 = s.Column
+      q = q - 1
+   Loop While Not ((c2 >= mc) Or (q = 0) Or (c1 = c2))
+   行の最終列_range = c2
+End Function
+
 Function 複数行の最終列_range(R_n As Range, _
                               Optional q As Long = 0) As Long
    ' R_n - 開始するセルを含む範囲-Range-
@@ -169,8 +203,9 @@ Function 複数行の最終列_range(R_n As Range, _
    Dim cx As Long
    cx = 0
    For k = 1 To R_n.Rows.count
+      qi = q
       Set s = R_n.Rows(k)
-      c1 = 0
+      ' c1 = 0
       ' c2 = 0
       c2 = s.Column
       ' 初期値はここで設定しておかないといけなそう。
@@ -178,9 +213,10 @@ Function 複数行の最終列_range(R_n As Range, _
          c1 = c2
          Set s = s.End(xlToRight)
          c2 = s.Column
-         q = q - 1
-      Loop While Not ((c2 >= mc) Or (q = 0))
-      If cx < c1 Then cx = c1
+         qi = qi - 1
+      Loop While Not ((c2 >= mc) Or (qi = 0))
+      ' If cx < c1 Then cx = c1
+      If cx < c2 Then cx = c2
    Next k
    複数行の最終列_range = cx
 End Function
@@ -200,23 +236,33 @@ Function range_連続列最大行_range(R_n As Range, _
    Dim nC As Long
    nr = R_n.Rows.count
    nC = R_n.Columns.count
+   Dim qi As long
    If (nr = 1) And (nC = 1) Then
       ' Call ExpandRangeCont(R_n, strName, cx)
+      qi = q
       Dim rz As Long
-      rz = 列の最終行_range(R_n)
+      rz = 列の最終行_range(R_n, , qi)
       Set R_n = R_n.Resize((rz - r0 + 1), 1)
+      qi = q
       Dim cz As Long
-      cz = 複数行の最終列_range(R_n)
+      cz = 複数行の最終列_range(R_n, qi)
       ' cz が 0 になってしまうのはなぜ。
       Set R_n = R_n.Resize((rz - r0 + 1), (cz - c0 + 1))
    End If
    Set range_連続列最大行_range = R_n
 End Function
 
-Function range_連続列最大行_namedrange(strRangeName As String) as Range
+Function range_連続列最大行_namedrange(strRangeName As String, _
+                                    Optional q As Long = 0) As Range
+   '
+   ' 複数列の最終行を使って、範囲をひろげる
+   ' ・（先頭列の行数）×（最長行の列数）を範囲とする
+   ' R_n - 開始するセルを含む範囲-Range-
+   ' q - ＜オプション＞何回目の空白を終わりとみなすか：0だと無制限
+   '
    ' 名前をつけた左上セルから、不定列数の連続行の範囲に拡張して範囲を返す
    Dim R_n As Range
    Set R_n = ThisWorkbook.Names(strRangeName).RefersToRange
    ' Set R_n =...
-   Set range_連続列最大行_namedrange = range_連続列最大行_range(R_n)
+   Set range_連続列最大行_namedrange = range_連続列最大行_range(R_n, q)
 End Function
