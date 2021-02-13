@@ -139,7 +139,7 @@ Sub 組織集計1列初期化()
    Dim rh As long
    Dim 組織辞書 As Range
    Set 組織辞書 = ThisWorkbook.Names(strName).RefersToRange
-   rh = Range_列の最終行_Range(組織辞書).Rows.Count
+   rh = Range_列の最終行_Range(組織辞書,, 1).Rows.Count
    Set 組織辞書 = 組織辞書.Resize(rh,1)
    Dim str組織辞書() As Variant
    str組織辞書 = 組織辞書.Value
@@ -233,7 +233,7 @@ Sub 組織集計個別審査件数転記()
    Dim R_1 As Range
    Dim R_2 As Range
    Dim R_3 As range
-   Set R_1 = range_列の最終行_namedrange("組織集計")
+   Set R_1 = range_列の最終行_namedrange("組織集計",, 1)
    Set R_2 = R_1.Offset(0, 2) ' 組織集計の集計値
    Dim v1() As Variant
    Dim v2() As Variant
@@ -849,7 +849,7 @@ Private Sub 組織集計個別審査件数更新(ByRef 組織別個別審査件数() As Long)
       Dim R組織集計 As Range
       Set R組織集計 = ThisWorkbook.Names(strName).RefersToRange
       r0 = R組織集計.Row
-      r1 = 列の最終行(strName)
+      r1 = 列の最終行(strName,, 1)
       ' c0 = R組織集計.Column + 2
       ' Dim R組織集計件数列 As Range
       ' stop
@@ -863,7 +863,7 @@ Private Sub 組織集計個別審査件数更新(ByRef 組織別個別審査件数() As Long)
    Else
       '＜↓変更↓＞
       ' Dim R組織集計件数列 As Range
-      Set R組織集計件数列 = Range_列の最終行_namedrange("組織集計").Offset(0, 2)
+      Set R組織集計件数列 = Range_列の最終行_namedrange("組織集計",, 1).Offset(0, 2)
       R組織集計件数列.Clear
    End If
    ' ---
@@ -881,7 +881,7 @@ Sub ClearColumnRowEnd(ByVal Ro1C As Range)
    Dim r0 As Long
    Dim r1 As Long
    r0 = Ro1C.Row
-   r1 = 列の最終行_Range(Ro1C)
+   r1 = 列の最終行_Range(Ro1C,, 1)
    Set Ro1C = Ro1C.Resize((r1 - r0 + 1), 1)
    Ro1C.Clear
 End Sub
@@ -920,8 +920,8 @@ Private Sub NamedRangeSQ2ArrStr(strName As String, _
    ' 領域の大きさを確認（mr, mc）
    Dim mr As Long
    Dim mc As Long
-   mr = 列の最終行(strName)
-   mc = 行の最終列(strName)
+   mr = 列の最終行(strName,, 1)
+   mc = 行の最終列(strName,, 1)
    Dim V_承認記録() As Variant
    Dim 承認記録 As Range
    Set 承認記録 = ThisWorkbook.Names("承認記録").RefersToRange.Resize(mr, mc)
@@ -1089,7 +1089,7 @@ Private Sub NZrowCompaction(strName As String, _
    Set R_n = ThisWorkbook.Names(strName).RefersToRange
    r0 = R_n.Row
    c0 = R_n.Column
-   r1 = 列の最終行(strName)
+   r1 = 列の最終行(strName,, 1)
    c1 = c0 + cols - 1
    ' ┗・・・年間登録件数と個別審査件数の欄まで拡張
    ' Dim strCV() As String
@@ -1144,7 +1144,7 @@ Private Sub a_組織集計_非ゼロ書出(ByRef 組織集計_非ゼロ() As Variant)
    '
    Dim strName As String
    strName = "組織集計"
-   r1 = 列の最終行(strName)
+   r1 = 列の最終行(strName,, 1)
    ' ┗・・・全集計名の最後の行数を得る
    strName = "組織集計＿非ゼロ"
    Dim R組織集計_非ゼロ As Range
@@ -1417,7 +1417,7 @@ Private Sub 取引区分集計個別審査件数更新(ByRef 取引区分別個別審査件数() As Long)
    Dim R取引集計 As Range
    Set R取引集計 = ThisWorkbook.Names(strName).RefersToRange
    r0 = R取引集計.Row
-   r1 = 列の最終行(strName)
+   r1 = 列の最終行(strName,, 1)
    Dim R取引集計件数列 As Range
    ' stop
    Set R取引集計件数列 = R取引集計.Offset(0, 1).Resize((r1 - r0 + 1), 1)
@@ -1439,7 +1439,7 @@ Private Sub 取引区分集計個別審査金額更新(ByRef 取引区分別個別審査金額() As Long)
    Dim R取引集計 As Range
    Set R取引集計 = ThisWorkbook.Names(strName).RefersToRange
    r0 = R取引集計.Row
-   r1 = 列の最終行(strName)
+   r1 = 列の最終行(strName,, 1)
    Dim R取引集計金額列 As Range
    ' stop
    Set R取引集計金額列 = R取引集計.Offset(0, 2).Resize((r1 - r0 + 1), 1)
@@ -1782,7 +1782,7 @@ Private Sub NamedRange2ary(strName As String, _
    Set rngC = ThisWorkbook.Names(strName).RefersToRange
    ' Set rngC = 列の最終行
    ' stop
-   Set rngC = range_列の最終行_range(rngC)
+   Set rngC = range_列の最終行_range(rngC,, 1)
    aryV = rngC
 End Sub
 
