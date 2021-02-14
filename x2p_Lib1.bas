@@ -1,4 +1,6 @@
 Attribute VB_Name = "x2p_Lib1"
+Option Explicit
+
 ' -*- coding:shift_jis-dos -*-
 
 './x2p_Lib1.bas
@@ -37,6 +39,17 @@ Public Sub 終了時解放()
 End Sub
 
 Function 列の最終行(n As String, _
+                    Optional k As Long = 1, _
+                    Optional q As Long = 0) As Long
+   ' n - 開始するセル（範囲でもよい）に名付けた名前（文字列）
+   ' k - ＜オプション＞その範囲の中の列番号
+   ' q - ＜オプション＞何回目の空白を終わりとみなすか：0だと無制限
+   Dim R_n As Range
+   Set R_n = ThisWorkbook.Names(n).RefersToRange
+   列の最終行 = 列の最終行_range(R_n, k, q)
+End Function
+
+Function a_列の最終行(n As String, _
                           Optional k As Long = 1, _
                           Optional ByVal q As Long = 0) As Long
    ' n - 開始するセル（範囲でもよい）に名付けた名前（文字列）
@@ -61,38 +74,19 @@ End Function
 
 Function 行の最終列(n As String, _
                     Optional k As Long = 1, _
-                    Optional ByVal q As Long = 0) As Long
+                    Optional q As Long = 0) As Long
    ' n - 開始するセル（範囲でもよい）に名付けた名前（文字列）
    ' k - ＜オプション＞その範囲の中の行番号
    ' q - ＜オプション＞何回目の空白を終わりとみなすか：0だと無制限
    '
    Dim R_n As Range
    Set R_n = ThisWorkbook.Names(n).RefersToRange
-   ' ---
-   If False then
-      If IsMissing(k) Then
-         If IsMissing(q) Then
-            行の最終列 = 行の最終列_range(R_n)
-         Else
-            行の最終列 = 行の最終列_range(R_n, , q)
-         End If
-      Else
-         If IsMissing(q) Then
-            行の最終列 = 行の最終列_range(R_n, k)
-         Else
-            行の最終列 = 行の最終列_range(R_n, k, q)
-         End If
-      End If
-   Else ' ＜↓変更↓＞
-      ' Optional であっても Variant 以外はデフォルト値が必要であり
-      ' そのため、 IsMissing となることはないから。
-      行の最終列 = 行の最終列_range(R_n, k, q)
-   End If
+   行の最終列 = 行の最終列_range(R_n, k, q)
 End Function
 
 Function 列の最終行_range(ByRef R_n As Range, _
                           Optional k As Long = 1, _
-                          Optional ByVal q As Long = 0) As Long
+                          Optional g As Long = 0) As Long
    ' R_n - 開始するセルを含む範囲-Range-
    ' k - ＜オプション＞その範囲の中の列番号
    ' q - ＜オプション＞何回目の空白を終わりとみなすか：0だと無制限
@@ -102,6 +96,9 @@ Function 列の最終行_range(ByRef R_n As Range, _
    ' ・下のセルが空白のとき、値のあるセルの連続の最初のセルに移動
    ' 　（上のセルが空白のセルになるセルに移動）
    ' 　／または、スプレッドシートの論理上の最大行のセルに移動
+   Dim q As Long
+   q = g
+   ' ---
    Dim r1 As Long
    Dim r2 As Long
    Dim mr As Long
@@ -145,7 +142,7 @@ End Function
 
 Function range_列の最終行_range(ByRef R_n As Range, _
                           Optional k As Long = 1, _
-                          Optional ByVal q As Long = 0) As Range
+                          Optional q As Long = 0) As Range
    ' R_n - 開始するセルを含む範囲-Range-
    ' k - ＜オプション＞その範囲の中の列番号
    ' q - ＜オプション＞何回目の空白を終わりとみなすか：0だと無制限
@@ -160,7 +157,7 @@ End Function
 
 Function range_列の最終行_namedrange(strName As String, _
                                      Optional k As Long = 1, _
-                                     Optional ByVal q As Long = 0) As Range
+                                     Optional q As Long = 0) As Range
    Dim R_n As range
    Set R_n = ThisWorkbook.Names(strName).RefersToRange
    Set range_列の最終行_namedrange = _
@@ -170,7 +167,7 @@ End Function
 
 Function a_range_列の最終行_range(ByRef R_n As Range, _
                                 Optional k As Long = 1, _
-                                Optional ByVal q As Long = 0) As Range
+                                Optional q As Long = 0) As Range
    ' R_n - 開始するセルを含む範囲-Range-
    ' k - ＜オプション＞その範囲の中の列番号
    ' q - ＜オプション＞何回目の空白を終わりとみなすか：0だと無制限
@@ -198,7 +195,7 @@ End Function
 
 Function 変更前_行の最終列_range(R_n As Range, _
                           Optional k As Long = 1, _
-                          Optional ByVal q As Long = 0) As Long
+                          Optional q As Long = 0) As Long
    ' R_n - 開始するセルを含む範囲-Range-
    ' k - ＜オプション＞その範囲の中の行番号
    ' q - ＜オプション＞何回目の空白を終わりとみなすか：0だと無制限
@@ -219,9 +216,9 @@ Function 変更前_行の最終列_range(R_n As Range, _
    行の最終列_range = c1
 End Function
 
-Function 行の最終列_range(ByVal R_n As Range, _
-                          Optional ByVal k As Long = 1, _
-                          Optional ByVal q As Long = 0) As Long
+Function 行の最終列_range(R_n As Range, _
+                          Optional k As Long = 1, _
+                          Optional g As Long = 0) As Long
    ' R_n - 開始するセルを含む範囲-Range-
    ' k - ＜オプション＞その範囲の中の行番号
    ' q - ＜オプション＞何回目の空白を終わりとみなすか
@@ -232,7 +229,10 @@ Function 行の最終列_range(ByVal R_n As Range, _
    ' 呼び出したあと、q の値が変わってしまうので、繰り返しのなかで
    ' q を指定して呼び出すと、予期せぬ結果になる。
    ' 関数なのに、引数についてさえ、デフォルトが ByRef という・・・
-   ' 
+   '
+   Dim q As Long
+   q = g
+   ' ---
    Dim c1 As Long
    Dim c2 As Long
    Dim mc As Long
@@ -276,7 +276,7 @@ End Function
 
 Function range_行の最終列_range(ByRef R_n As Range, _
                                 Optional k As Long = 1, _
-                                Optional ByVal q As Long = 0) As Range
+                                Optional q As Long = 0) As Range
    ' R_n - 開始するセルを含む範囲-Range-
    ' k - ＜オプション＞その範囲の中の行番号
    ' q - ＜オプション＞何回目の空白を終わりとみなすか：0だと無制限
@@ -291,7 +291,7 @@ End Function
 
 Function range_行の最終列_namedrange(strName As String, _
                                      Optional k As Long = 1, _
-                                     Optional ByVal q As Long = 0) As Range
+                                     Optional q As Long = 0) As Range
    Dim R_n As range
    Set R_n = ThisWorkbook.Names(strName).RefersToRange
    Set range_行の最終列_namedrange = _
@@ -300,7 +300,7 @@ Function range_行の最終列_namedrange(strName As String, _
 End Function
 
 Function a_複数行の最終列_range(R_n As Range, _
-                              Optional ByVal q As Long = 0) As Long
+                              Optional q As Long = 0) As Long
    ' R_n - 開始するセルを含む範囲-Range-
    ' q - ＜オプション＞何回目の空白を終わりとみなすか：0だと無制限
    Dim c1 As Long
@@ -331,7 +331,7 @@ Function a_複数行の最終列_range(R_n As Range, _
 End Function
 
 Function 複数行の最終列_range(R_n As Range, _
-                              Optional ByVal q As Long = 0) As Long
+                              Optional q As Long = 0) As Long
    ' R_n - 開始するセルを含む範囲-Range-
    ' q - ＜オプション＞何回目の空白を終わりとみなすか：0だと無制限
    '
@@ -357,7 +357,7 @@ Function 複数行の最終列_range(R_n As Range, _
 End Function
 
 Function range_連続列最大行_range(R_n As Range, _
-                                    Optional ByVal q As Long = 1) As Range
+                                  Optional q As Long = 1) As Range
    '
    ' 複数列の最終行を使って、範囲をひろげる
    ' ・（先頭列の行数）×（最長行の列数）を範囲とする
@@ -391,7 +391,7 @@ Function range_連続列最大行_range(R_n As Range, _
 End Function
 
 Function range_連続列最大行_namedrange(strRangeName As String, _
-                                    Optional ByVal q As Long = 1) As Range
+                                    Optional q As Long = 1) As Range
    '
    ' 複数列の最終行を使って、範囲をひろげる
    ' ・（先頭列の行数）×（最長行の列数）を範囲とする

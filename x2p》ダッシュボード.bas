@@ -1,4 +1,5 @@
 ' -*- coding:shift_jis -*-
+Option Explicit
 
 './x2p》ダッシュボード.bas
 
@@ -213,6 +214,7 @@ Sub 組織別個別審査件数集計()
    Dim IX As Long
    Dim U2 As Long
    U2 = UBound(str承認記録, 1)
+   Dim i As Long
    For i = 2 To U2
       ' Debug.Print str承認記録(i, 2)
       If p有効期間(str承認記録(i, 2)) Then
@@ -256,6 +258,7 @@ Sub 組織集計個別審査件数転記()
    If LB1 <> LBound(v2, 1) Then Debug.Print("組織集計に異常があります。＠転記")
    If UB1 <> UBound(v2, 1) Then Debug.Print("組織集計に異常があります。＠転記")
    ReDim v3(1 To UB1, 1 To 2)
+   Dim i As Long
    For i = 1 To UB1
       v3(i, 1) = v1(i, 1)
       v3(i, 2) = v2(i, 1)
@@ -323,6 +326,7 @@ Sub 取引区分別個別審査件数集計()
    Dim IX As Long
    Dim U2 As Long
    U2 = UBound(str承認記録, 1)
+   Dim i As Long
    For i = 2 To U2
       If p有効期間(str承認記録(i, 2)) Then
          ' 8 - 表では『取引内容区分』
@@ -404,6 +408,8 @@ Sub 仕向地別集計()
    '
    ' ソートし、所定の範囲に記入
    ' 
+   Dim i As Long
+   
    Call 降順ソート(ary集計名件数金額, 2) '件数降順
    Dim ary集計名件数() As Variant
    ReDim ary集計名件数(1 To nClass, 1 To 2)
@@ -491,6 +497,7 @@ Private Sub 仕向地集計(str承認記録() As String, _
    Dim U2 As Long
    ' 件数と金額を初期化（Emptyではなく0に）
    U2 = UBound(aryNTM, 1)
+   Dim i As Long
    For i = 1 To U2
       aryNTM(i, 2) = 0
       aryNTM(i, 3) = 0
@@ -507,6 +514,9 @@ Private Sub 仕向地集計(str承認記録() As String, _
    ' --- ここからステップ実行で確認
    For i = 2 To U2
       If p有効期間(str承認記録(i, iC_承認日)) Then
+      ' p有効期限　を呼ばなければ大丈夫か？
+      ' よばなければそこでは落ちないが、あとから落ちることが判明。
+      ' If True Then
          str仕向地 = str承認記録(i, iC_仕向地)
          str金額 = str承認記録(i, iC_金額)
          '
@@ -518,6 +528,7 @@ Private Sub 仕向地集計(str承認記録() As String, _
             ' ┗・・・仕向地の Identification Number（複数割当もあり得るのでの配列）
             Dim U22 As Long
             u22 = UBound(aryIX, 1)
+            Dim j As Long
             For j = 1 To U22
                If j > 1 Then Debug.Print j
                IX = aryIX(j)
@@ -829,6 +840,7 @@ Private Sub Col2CIonSTrng(rngC As Range, _
    ReDim ST(m)
    '     ┗『aryC』としてもっているセルの値を格納する配列を用意する。
    '
+   Dim r As Long
    For r = 1 To m
       CI(r) = rngC.Cells(r, 1).Interior.ColorIndex
       ST(r) = aryC(r, 1)
@@ -843,9 +855,9 @@ Private Sub CIonST2Arr(ByRef CI() As Long, _
                        ByRef varstrArr() As Variant)
    Dim m As Long
    m = UBound(ST, 1)
-   For r = 1 To m
+   ' For r = 1 To m
       ' Debug.Print ST(r) & ":" & CI(r)
-   Next r
+   ' Next r
    Dim varArr() As Variant
    ReDim varArr(m, m)
    '     ┗varArrの列がとりうる最大は m 行がとりうる最大は m である。
@@ -857,6 +869,7 @@ Private Sub CIonST2Arr(ByRef CI() As Long, _
    i = 0: j = 0: k = 0
    RCI = CI(1)
    '┗・・・第１行の色を上位組織の判定基準として使う rootCI
+   Dim r As Long
    For r = 1 To m
       If CI(r) = RCI Then
          If k < i Then k = i
@@ -869,6 +882,8 @@ Private Sub CIonST2Arr(ByRef CI() As Long, _
    Next r
    ' varArrは j 行 k 列の配列ということになる。
    ReDim varstrArr(1 To j, 1 To k)
+   Dim p As Long
+   Dim q As Long
    For q = 1 To k
       For p = 1 To j
          varstrArr(p, q) = varArr(p, q)
@@ -887,6 +902,8 @@ Private Sub 組織集計個別審査件数更新(ByRef 組織別個別審査件数() As Long)
       strName = "組織集計"
       Dim R組織集計 As Range
       Set R組織集計 = ThisWorkbook.Names(strName).RefersToRange
+      Dim r0 As Long
+      Dim r1 As Long
       r0 = R組織集計.Row
       r1 = 列の最終行(strName,, 1)
       ' c0 = R組織集計.Column + 2
@@ -968,6 +985,8 @@ Private Sub NamedRangeSQ2ArrStr(strName As String, _
    ' ┗V_承認記録(i,j) = 承認記録.Cells(i,j)
    ' Dim str_承認記録 As string
    ReDim str_承認記録(1 To mr, 1 To mc)
+   Dim i As Long
+   Dim j As Long
    For i = 1 To mr
       For j = 1 To mc
          str_承認記録(i, j) = V_承認記録(i, j)
@@ -1125,6 +1144,10 @@ Private Sub NZrowCompaction(strName As String, _
    ' strName = "組織集計"
    Dim R_n As Range
    Set R_n = ThisWorkbook.Names(strName).RefersToRange
+   Dim r0 As Long
+   Dim c0 As Long
+   Dim r1 As Long
+   Dim c1 As Long
    r0 = R_n.Row
    c0 = R_n.Column
    r1 = 列の最終行(strName,, 1)
@@ -1138,6 +1161,7 @@ Private Sub NZrowCompaction(strName As String, _
    Dim strNZ() As String
    ReDim strNZ(1 To (UBound(strCV, 1) - LBound(strCV, 1) + 1), 1 To cols)
    ReDim NZC(1 To (UBound(strCV, 1) - LBound(strCV, 1) + 1), 1 To cols)
+   Dim i As Long
    Dim j As Long
    Dim c As Long
    Dim z As Boolean
@@ -1311,6 +1335,7 @@ Private Sub PrintArrayOnRange(R_n As Range, _
    rowsR = R_n.Rows.Count
    If rowsA < rowsR Then rowsA = rowsR
    Dim colsA As Long
+   Dim colsR As Long
    colsA = UBound(Ary, 2) - LBound(Ary, 2) + 1
    colsR = R_n.Columns.Count
    If colsA < colsR Then colsA = colsR
@@ -1441,6 +1466,7 @@ MAIN:
    '
    Dim vAry() As Variant
    ReDim vAry(LB To UB, 1)
+   Dim i As Long
    For i = LB To UB
       vAry(i, 1) = Ary(i)
    Next i
@@ -1514,6 +1540,7 @@ Private Sub 仕向地集計名配列生成(strName As String, _
    ReDim aryN(1 To nClass, 1 To 1)
    Call NamedRange2ary(strName, aryN)
    ' Stop
+   Dim i As Long
    For i = LBound(aryN, 1) To UBound(aryN, 1)
       aryNTM(i, 1) = aryN(i, 1)
    Next i
@@ -1761,6 +1788,7 @@ Private Sub MultiHomeDict_namedRange(strName As String, _
    nClass = R_n.Rows.count
    '
    Dim U1 As Long
+   Dim U2 As Long
    U1 = UBound(var辞書, 1)
    U2 = UBound(var辞書, 2)
    If (cx > 0) Then
@@ -1768,6 +1796,10 @@ Private Sub MultiHomeDict_namedRange(strName As String, _
    End If
    
    Dim d0 As Long
+   Dim i As Long
+   Dim j As Long
+   Dim k As Long
+   Dim d As Variant
    If pS Then
       For i = 1 To U1
          d0 = i
