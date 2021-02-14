@@ -60,26 +60,33 @@ Function 列の最終行(n As String, _
 End Function
 
 Function 行の最終列(n As String, _
-                          Optional k As Long = 1, _
-                          Optional ByVal q As Long = 0) As Long
+                    Optional k As Long = 1, _
+                    Optional ByVal q As Long = 0) As Long
    ' n - 開始するセル（範囲でもよい）に名付けた名前（文字列）
    ' k - ＜オプション＞その範囲の中の行番号
    ' q - ＜オプション＞何回目の空白を終わりとみなすか：0だと無制限
    '
    Dim R_n As Range
    Set R_n = ThisWorkbook.Names(n).RefersToRange
-   If IsMissing(k) Then
-      If IsMissing(q) Then
-         行の最終列 = 行の最終列_range(R_n)
+   ' ---
+   If False then
+      If IsMissing(k) Then
+         If IsMissing(q) Then
+            行の最終列 = 行の最終列_range(R_n)
+         Else
+            行の最終列 = 行の最終列_range(R_n, , q)
+         End If
       Else
-         行の最終列 = 行の最終列_range(R_n, , q)
+         If IsMissing(q) Then
+            行の最終列 = 行の最終列_range(R_n, k)
+         Else
+            行の最終列 = 行の最終列_range(R_n, k, q)
+         End If
       End If
-   Else
-      If IsMissing(q) Then
-         行の最終列 = 行の最終列_range(R_n, k)
-      Else
-         行の最終列 = 行の最終列_range(R_n, k, q)
-      End If
+   Else ' ＜↓変更↓＞
+      ' Optional であっても Variant 以外はデフォルト値が必要であり
+      ' そのため、 IsMissing となることはないから。
+      行の最終列 = 行の最終列_range(R_n, k, q)
    End If
 End Function
 
@@ -99,9 +106,17 @@ Function 列の最終行_range(ByRef R_n As Range, _
    Dim r2 As Long
    Dim mr As Long
    Dim s As Range
+   Dim w As Long
+   w = 0
    mr = Rows.count ' 行の最大値・・・ここで飽和する。
    Set s = R_n.Columns(k)
    r2 = s.Row
+   If (mr = r2) Or (mr = s.Rows.Count) Then
+      Debug.Print("列の最終行_rangeに与えられた範囲がシートの最下行に達しています")
+      列の最終行_range = mr
+      Exit Function
+   End If
+   '
    Do
       r1 = r2
       ' ---
@@ -109,13 +124,22 @@ Function 列の最終行_range(ByRef R_n As Range, _
       ' ＜↓変更↓＞
       ' s が複数セル／行の範囲のこともあるので：
       If "" = s.Cells((s.Rows.Count + 1), 1).Value Then
+         If w > 0 Then
+            w = 0
+            Set s = s.End(xlDown)
+         Else
+            w = 1
+         End If
       Else
+         w = 0
          Set s = s.End(xlDown)
       End If
       ' ---
       r2 = s.Row
       q = q - 1
-   Loop While Not ((r2 >= mr) Or (q = 0) Or (r1 = r2))
+      ' ......... ((r2 >= mr) Or (q = 0) Or (r1 = r2))
+      ' ＜↓変更↓＞
+   Loop While Not ((r2 >= mr) Or (q = 0))
    列の最終行_range = r2
 End Function
 
@@ -213,9 +237,17 @@ Function 行の最終列_range(ByVal R_n As Range, _
    Dim c2 As Long
    Dim mc As Long
    Dim s As Range
+   Dim w As long
+   w = 0
    mc = Columns.count ' 列の最大値・・・ここで飽和する。
    Set s = R_n.Rows(k)
    c2 = s.Column
+   If (mc = c2) Or (mc = s.Columns.Count) Then
+      Debug.Print("行の最終列_rangeに与えられた範囲がシートの最右列に達しています")
+      行の最終列_range = mc
+      Exit Function
+   End If
+   '
    Do
       c1 = c2
       ' ---
@@ -223,13 +255,22 @@ Function 行の最終列_range(ByVal R_n As Range, _
       ' ＜↓変更↓＞
       ' s が複数セル／列からなる範囲であることもあるので：
       If "" = s.Cells(1, (s.Columns.Count + 1)).Value Then
+         If w > 0 Then
+            w = 0
+            Set s = s.End(xlToRight)
+         Else
+            w =1
+         End If
       Else
+         w = 0
          Set s = s.End(xlToRight)
       End If
       ' ---
       c2 = s.Column
       q = q - 1
-   Loop While Not ((c2 >= mc) Or (q = 0) Or (c1 = c2))
+      ' ......... ((c2 >= mc) Or (q = 0) Or (c1 = c2))
+   ' ＜↓変更↓＞
+   Loop While Not ((c2 >= mc) Or (q = 0))
    行の最終列_range = c2
 End Function
 

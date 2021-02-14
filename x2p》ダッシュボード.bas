@@ -42,7 +42,7 @@ Sub 名前の定義確認の生成()
    ' r0 = 列の最終行_range(Cells(rz, c1), , 4)
    ' rz = 列の最終行_range(Cells(rz, c1), , 5)
    '＜↓変更↓＞
-   r0 = 列の最終行_range(Cells(rz, c1),, 1)
+   r0 = 列の最終行_range(Cells(rz, c1),, 2) ' 下端に居ることが明らかなので２
    rz = 列の最終行_range(Cells(r0, c1),, 1) ' 最初の空白行の手前の行
    For r = r0 To rz
       Call newName2Range(Cells(r, c2), Cells(r, c1).Value)
@@ -99,7 +99,7 @@ Sub 組織辞書初期化()
    '
    ' Call 組織略称クリア
    ' ＜↓変更↓＞
-   ' ＝＝＝＝＝＝
+   ' ＝＝＝＝＝＝　以下の『３』でクリアも行うので別で実行が不要
    '
    ' １┏・・・背景色識別で作られた組織表の背景色と内容を配列にそれぞれ格納する
    Dim 組織略称CI() As Long
@@ -110,8 +110,6 @@ Sub 組織辞書初期化()
    Dim str組織辞書() As Variant
    Call CIonST2Arr(組織略称CI(), 組織略称ST(), str組織辞書())
    '
-   Stop
-   
    ' ３┏・・・名付けした範囲に配列を書き出し範囲を広げて名付けを更新する
    Dim strName As String
    ' strName = "Range_組織辞書"
@@ -369,6 +367,9 @@ End Sub
 ' 　　　別名に複数回（２回以上）記載されているもの　を回数とともに表示している。
 '
 Sub 仕向地別集計()
+   '
+   ' Stop
+   '
    Dim dic仕向番号 As New Dictionary
    Dim ary集計名() As String
    Dim ary集計名件数金額() As Variant
@@ -376,14 +377,22 @@ Sub 仕向地別集計()
    Dim ary未割当仕向() As Variant
    Dim nClass As Long
    Call 仕向地辞書生成("仕向地別名", nClass, dic仕向番号)
-   ' Stop
    ' ┗・・・ここで　Debug.Print(dic仕向番号("イタリヤ")(1))　とすれば
    ' 　　　　dic仕向番号に読み込まれていることがわかる
+   '
+   ' Stop
+   '
    Call 仕向地集計名配列生成("仕向地別名", nClass, ary集計名件数金額)
    ' ┗・・・
+   '
+   Stop
+   '
    Call 仕向地集計("承認記録", 11, 10, dic仕向番号, ary集計名件数金額, ary未割当仕向)
    ' Stop
    ' ┗・・・このあと　集計名件数金額　と　未割当仕向　を表示する
+   '
+   Stop
+   '
    ' ┏仕向地集計名件数金額表示
    Call PrintArrayOnNamedRange("仕向地集計", ary集計名件数金額, 3, -4)
    ' ┏未割当別名表示
@@ -435,6 +444,9 @@ Private Sub 仕向地集計(strNameD As String, _
                        ByRef dicDIN As Dictionary, _
                        ByRef aryNTM() As Variant, _
                        ByRef aryYAD() As Variant)
+   '
+   Stop
+   '
    '...................ByRef aryYAD() As String)
    ' aryYAD　未割当仕向　の扱い
    ' 表示させるときに aryYAD も Variant でないと型が一致せずコンパイルエラー
@@ -463,7 +475,9 @@ Private Sub 仕向地集計(strNameD As String, _
    ' Call 承認記録読み取り(str承認記録)
    ' Call NamedRangeSQ2ArrStr("承認記録", str承認記録)
    Call NamedRangeSQ2ArrStr(strNameD, str承認記録)
+   '
    ' Stop
+   '
    ' ここから　配列　str承認記録　に対して　▼３／▼５を参考にして集計処理を行う。
    Dim U2 As Long
    ' 件数と金額を初期化（Emptyではなく0に）
@@ -479,10 +493,16 @@ Private Sub 仕向地集計(strNameD As String, _
    Dim IX As Long
    Dim str仕向地 As String
    Dim str金額 As String
+   '
+   Stop
+   ' --- ここからステップ実行で確認
    For i = 2 To U2
       If p有効期間(str承認記録(i, iC_承認日)) Then
          str仕向地 = str承認記録(i, iC_仕向地)
          str金額 = str承認記録(i, iC_金額)
+         '
+         Stop
+         '
          If dicDIN.Exists(str仕向地) Then
             Dim aryIX() As Variant
             aryIX = dicDIN.Item(str仕向地)
@@ -508,6 +528,7 @@ Private Sub 仕向地集計(strNameD As String, _
          End If
       End If
    Next i
+   ' --- ここまでの実行になにか問題がある。
    If nYAD = 0 Then
       ' 未割当仕向がまったく無かったとき、配列もなくしてしまうと例外処理
       ' が面倒なので、特別に１要素で空文字列の配列にしておく。
@@ -998,7 +1019,6 @@ Private Sub 組織辞書読み取り(ByRef str組織辞書() As String)
          str組織辞書(i, j) = V組織辞書(i, j)
       Next j
    Next i
-   Stop
    '
 End Sub
 
@@ -1246,7 +1266,8 @@ Private Sub PrintArrayOnNamedRange(strName As String, _
                                    ByRef aAry() As Variant, _
                                    Optional cols As Long = 0, _
                                    Optional ROOT As Long = 0)
-   Stop
+   '
+   ' Stop
    '
    Dim R_n As Range
    Set R_n = range_連続列最大行_namedrange(strName)
