@@ -28,17 +28,22 @@ Sub 名前の定義確認の生成()
    c1 = c2 - 1
    r0 = BA.TopLeftCell.Row + 1
    ' rz = 列の最終行_range(Cells(r0, c1), , 2) ' 最初の空白行の手前の行
-   rz = 列の最終行_range(Cells(r0, c1), , 3) ' 最初の空白行の手前の行
+   ' rz = 列の最終行_range(Cells(r0, c1), , 3) ' 最初の空白行の手前の行
    ' ┗・・・なぜかここ、パラメータ（上記の３）を増やさないといけなかった。
    ' 　　　　どうしてかは未解明
+   '＜↓変更↓＞
+   rz = 列の最終行_range(Cells(r0, c1),, 1) ' 最初の空白行の手前の行
    ' stop
    For r = r0 To rz
       Cells(r, c2).Value = "=isref(" & Cells(r, c1).Value & ")"
    Next r
    ' 表示のための名前付け範囲生成：
    ' その下の空白につづいて状況表示用のセルとその名前を配置する。
-   r0 = 列の最終行_range(Cells(rz, c1), , 4)
-   rz = 列の最終行_range(Cells(rz, c1), , 5)
+   ' r0 = 列の最終行_range(Cells(rz, c1), , 4)
+   ' rz = 列の最終行_range(Cells(rz, c1), , 5)
+   '＜↓変更↓＞
+   r0 = 列の最終行_range(Cells(rz, c1),, 1)
+   rz = 列の最終行_range(Cells(r0, c1),, 1) ' 最初の空白行の手前の行
    For r = r0 To rz
       Call newName2Range(Cells(r, c2), Cells(r, c1).Value)
    Next r
@@ -92,7 +97,9 @@ Sub 組織辞書初期化()
    ' はなく『組織』を編集（現在の設定をコピー、編集して、『組織』と名前定義）
    ' するものとした。
    '
-   Call 組織略称クリア
+   ' Call 組織略称クリア
+   ' ＜↓変更↓＞
+   ' ＝＝＝＝＝＝
    '
    ' １┏・・・背景色識別で作られた組織表の背景色と内容を配列にそれぞれ格納する
    Dim 組織略称CI() As Long
@@ -103,6 +110,8 @@ Sub 組織辞書初期化()
    Dim str組織辞書() As Variant
    Call CIonST2Arr(組織略称CI(), 組織略称ST(), str組織辞書())
    '
+   Stop
+   
    ' ３┏・・・名付けした範囲に配列を書き出し範囲を広げて名付けを更新する
    Dim strName As String
    ' strName = "Range_組織辞書"
@@ -1237,6 +1246,8 @@ Private Sub PrintArrayOnNamedRange(strName As String, _
                                    ByRef aAry() As Variant, _
                                    Optional cols As Long = 0, _
                                    Optional ROOT As Long = 0)
+   Stop
+   '
    Dim R_n As Range
    Set R_n = range_連続列最大行_namedrange(strName)
    Call PrintArrayOnRange(R_n, aAry, cols ,ROOT)

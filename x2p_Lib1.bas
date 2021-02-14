@@ -104,7 +104,15 @@ Function 列の最終行_range(ByRef R_n As Range, _
    r2 = s.Row
    Do
       r1 = r2
-      Set s = s.End(xlDown)
+      ' ---
+      ' Set s = s.End(xlDown)
+      ' ＜↓変更↓＞
+      ' s が複数セル／行の範囲のこともあるので：
+      If "" = s.Cells((s.Rows.Count + 1), 1).Value Then
+      Else
+         Set s = s.End(xlDown)
+      End If
+      ' ---
       r2 = s.Row
       q = q - 1
    Loop While Not ((r2 >= mr) Or (q = 0) Or (r1 = r2))
@@ -210,7 +218,15 @@ Function 行の最終列_range(ByVal R_n As Range, _
    c2 = s.Column
    Do
       c1 = c2
-      Set s = s.End(xlToRight)
+      ' ---
+      ' Set s = s.End(xlToRight)
+      ' ＜↓変更↓＞
+      ' s が複数セル／列からなる範囲であることもあるので：
+      If "" = s.Cells(1, (s.Columns.Count + 1)).Value Then
+      Else
+         Set s = s.End(xlToRight)
+      End If
+      ' ---
       c2 = s.Column
       q = q - 1
    Loop While Not ((c2 >= mc) Or (q = 0) Or (c1 = c2))
@@ -284,7 +300,8 @@ Function 複数行の最終列_range(R_n As Range, _
    c2 = 0
    Dim r2 As Long
    r2 = R_n.Row
-   Set R_n = R_n.Resize((列の最終行_range(R_n, 1, 1) - r2), 1)
+   ' R_n.Rows.Count > 1 であることもあるので：
+   Set R_n = R_n.Resize((列の最終行_range(R_n.Cells(1, 1), 1, 1) - r2), 1)
    '
    Dim k As Long
    For k = 1 To R_n.Rows.Count
