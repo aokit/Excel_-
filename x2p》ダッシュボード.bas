@@ -370,6 +370,7 @@ Sub 仕向地別集計()
    '
    ' Stop
    '
+   Dim str承認記録() As String
    Dim dic仕向番号 As New Dictionary
    Dim ary集計名() As String
    Dim ary集計名件数金額() As Variant
@@ -387,7 +388,9 @@ Sub 仕向地別集計()
    '
    Stop
    '
-   Call 仕向地集計("承認記録", 11, 10, dic仕向番号, ary集計名件数金額, ary未割当仕向)
+   Call 承認記録配列格納("承認記録", str承認記録)
+   Call 仕向地集計(str承認記録, 11, 10, dic仕向番号, _
+                   ary集計名件数金額, ary未割当仕向)
    ' Stop
    ' ┗・・・このあと　集計名件数金額　と　未割当仕向　を表示する
    '
@@ -438,7 +441,12 @@ Sub 仕向地別集計()
    ' Call 仕向地別名回数表示("仕向地別名回数")
 End Sub
 
-Private Sub 仕向地集計(strNameD As String, _
+Private Sub 承認記録配列格納(strNameD As String, _
+                             str承認記録() As String)
+   Call NamedRangeSQ2ArrStr(strNameD, str承認記録)
+End Sub
+
+Private Sub 仕向地集計(str承認記録() As String, _
                        iC_仕向地 As Long, _
                        iC_金額 As Long, _
                        ByRef dicDIN As Dictionary, _
@@ -471,10 +479,11 @@ Private Sub 仕向地集計(strNameD As String, _
    ' ┗・・・未割当の仕向を格納する（返すときには未使用を削る）
    Dim nYAD As Long
    nYAD = 0
-   Dim str承認記録() As String
+   '
+   ' Dim str承認記録() As String
    ' Call 承認記録読み取り(str承認記録)
    ' Call NamedRangeSQ2ArrStr("承認記録", str承認記録)
-   Call NamedRangeSQ2ArrStr(strNameD, str承認記録)
+   ' Call NamedRangeSQ2ArrStr(strNameD, str承認記録)
    '
    ' Stop
    '

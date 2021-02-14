@@ -342,7 +342,10 @@ Function 複数行の最終列_range(R_n As Range, _
    Dim r2 As Long
    r2 = R_n.Row
    ' R_n.Rows.Count > 1 であることもあるので：
-   Set R_n = R_n.Resize((列の最終行_range(R_n.Cells(1, 1), 1, 1) - r2), 1)
+   If R_n.Rows.Count > 1 then
+      Set R_n = R_n.Resize((列の最終行_range(R_n.Cells(1, 1), 1, 1) - r2), 1)
+   End If
+   ' ┗R_n.Rows.Count = 1 なら R_nはそのまま。
    '
    Dim k As Long
    For k = 1 To R_n.Rows.Count
