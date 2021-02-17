@@ -440,16 +440,16 @@ Sub 許可特例等抽出()
    Call SingleHomeDict_namedRange("Range_組織辞書", U1, dic組織辞書, 0)
    Dim 申請者所属 As String
 
-   Dim A1() As String ' 包括許可
-   Dim A2() As String ' 包括許可（貨物）
-   Dim A3() As String ' 包括許可（役務）
-   Dim A4() As String ' 少額特例
-   Dim A5() As String ' 公知特例
-   Dim A6() As String ' 該当国内
-   Dim A1A() As String
-   Dim A4A() As String
-   Dim A1V() As Variant
-   Dim A4V() As variant
+   Dim A1() As String ' 包括許可の管理番号
+   Dim A2() As String ' 包括許可（貨物）の管理番号
+   Dim A3() As String ' 包括許可（役務）の管理番号
+   Dim A4() As String ' 少額特例の管理番号
+   Dim A5() As String ' 公知特例の管理番号
+   Dim A6() As String ' 該当国内の管理番号
+   Dim A1A() As String ' 包括許可の主要フィールド
+   Dim A4A() As String ' 少額特例の主要フィールド
+   Dim A1V() As Variant ' 包括許可の主要フィールド（Print用）
+   Dim A4V() As Variant ' 包括許可の主要フィールド（Print用）
       
    ReDim A1(1 To U2)
    ReDim A2(1 To U2)
@@ -553,38 +553,32 @@ Sub 許可特例等抽出()
       End If
    Next i
 
-   ReDim Preserve A1(1 To i1 - 1)
-   ReDim Preserve A2(1 To i2 - 1)
-   ReDim Preserve A3(1 To i3 - 1)
-   ReDim Preserve A4(1 To i4 - 1)
-   ReDim Preserve A5(1 To i5 - 1)
-   ReDim Preserve A6(1 To i6 - 1)
-   ReDim A1V(1 To i1 - 1, 1 To 7)
-   Dim r As Long
-   Dim c As Long
-   For r = 1 To i1 - 1
-      For c = 1 To 7
-         A1V(r, c) = A1A(r, c)
-      Next c
-   Next r
-   ReDim A4V(1 To i4 - 1, 1 To 7)
-   For r = 1 To i4 - 1
-      For c = 1 To 7
-         A4V(r, c) = A4A(r, c)
-      Next c
-   Next r
-   
+   ' i{1-6}が1（対象がなかったとき）どうするかを決めておく必要があった。
+
+   ' True - 要素がないときにも１つだけ（空文字列にする）は残す。
+   Call StringAryPack(A1, 1, (i1 - 1), True, "A1")
+   Call StringAryPack(A2, 1, (i2 - 1), True, "A2")
+   Call StringAryPack(A3, 1, (i3 - 1), True, "A3")
+   Call StringAryPack(A4, 1, (i4 - 1), True, "A4")
+   Call StringAryPack(A5, 1, (i5 - 1), True, "A5")
+   Call StringAryPack(A6, 1, (i6 - 1), True, "A6")
+
+   ' Print用の Variant 配列へ転記 - ２次元配列の ReDim は後ろの添字にしか
+   ' できないので、String配列側は前の添字の範囲（行番号）を指定する。
+   Call StringAry2VariantAry(A1A, 1, (i1 - 1), A1V, True)
+   Call StringAry2VariantAry(A4A, 1, (i4 - 1), A4V, True)
+
    ' Stop
 
    Dim AA() As Variant
    Dim iz As Long
-   iz = 0
-   If iz < (i1 - 1) Then iz = i1 - 1
-   If iz < (i2 - 1) Then iz = i2 - 1
-   If iz < (i3 - 1) Then iz = i3 - 1
-   If iz < (i4 - 1) Then iz = i4 - 1
-   If iz < (i5 - 1) Then iz = i5 - 1
-   If iz < (i6 - 1) Then iz = i6 - 1
+   iz = maxparam(UBound(A1, 1), _
+                 UBound(A2, 1), _
+                 UBound(A3, 1), _
+                 UBound(A4, 1), _
+                 UBound(A5, 1), _
+                 UBound(A6, 1))
+   ' iz は　１　以上になっている（全部　空文字列　でも）
    ReDim AA(1 To iz, 1 To 6)
    For i = 1 To iz
       If UBound(A1, 1) < i Then
@@ -634,6 +628,112 @@ End Sub
 ' ┃┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ' ┃┃一般化プロシジャ（おもに Private 関数）
 ' ┃┗
+
+Sub StringAryPack(ByRef stringArray() As String, _
+                  n1 As Long, _
+                  n2 As Long, _
+                  psp As Boolean, _
+                  Optional message As String = "")
+   '
+   ' 文字列の配列を添字の値、２つで指定して切り詰める。
+   ' psp が True なら指定が矛盾してもも空の文字列１つの配列を返す。
+   ' 添字として指定した２つの値が同じときには、１つの要素のみの配列
+   ' を返す。範囲の指定が大小逆のときには、空文字　を要素とする、
+   ' １つの要素のみの配列を返す。ただし、psp が False のときには、
+   ' なにもしない（もとの配列をそのままにする）で、エラーメッセージ
+   ' を Debug.Printする。エラーメッセージに message を追加できる。
+   ' 
+   Dim m As Long
+   m = n2 - n1
+   Select Case m
+      Case Is > 0
+         ReDim Preserve stringArray(n1 To n2)
+      Case Is = 0
+         ReDim Preserve stringArray(n1 To n1)
+      Case Is < 0
+         Debug.Print("StringAryPackでエラー：" + message)
+         If psp then
+            stringArray(n1) = ""
+            ReDim Preserve stringArray(n1 To n1)
+         End If
+   End Select
+End Sub
+
+Sub StringAry2VariantAry(ByRef AnA() As String, _
+                         n1 As Long, _
+                         n2 As Long, _
+                         ByRef AnV() As Variant, _
+                         psp As Boolean)
+   '
+   ' 文字列の２次元配列の、２次元め（後ろ・行列の列）の添字の値、２つ
+   ' を指定して切り詰めて、Variant型の配列を生成する。
+   ' １次元め（まえ・行列の行）の添字はもとの配列の範囲をすべて
+   ' 生成する配列に書き込む。
+   ' psp が True なら指定が矛盾しても空の文字列１つの列の配列を返す。
+   ' 添字として指定した２つの値が同じときには、１つの列の配列を返す。
+   ' 範囲の指定が大小逆のときには、空文字　を要素とする、
+   ' １つの列のみの配列を返す。ただし、psp が False のときには、
+   ' なにもしない（もとの配列をそのままにする）で、エラーメッセージ
+   ' を Debug.Printする。
+   '
+   Dim m As Long
+   m = n2 - n1
+   Dim m1 As Long
+   Dim m2 As Long
+   m1 = LBound(AnA, 2)
+   m2 = UBound(AnA, 2)
+   Dim r As Long
+   Dim c As Long
+   Select Case m
+      Case Is > 0
+         ReDim AnV(n1 To n2, m1 To m2)
+         For r = n1 To n2
+            For c = m1 To m2
+               AnV(r, c) = AnA(r, c)
+            Next c
+         Next r
+      Case Is = 0
+         ReDim AnV(n1 To n1, m1 To m2)
+         For c = m1 To m2
+            AnV(n1, c) = AnA(n1, c)
+         Next c
+      Case Is < 0
+         Debug.Print("StringAry2VariantAryでエラー")
+         If psp then
+            ReDim AnV(n1 To n1, m1 To m2)
+            For c = m1 To m2
+               AnV(n1, c) = AnA(n1, c)
+            Next c
+         End If
+   End Select
+End Sub
+
+Function maxparam(ParamArray p()) As Long
+   '
+   ' 任意の個数の引数（を Long型 であるとして）
+   ' 最大値を返す。
+   ' 引数は、Long型を想定しているが、ParamArray としたいので
+   ' Variant型で表現している。
+   '
+   Dim i1 As Long
+   Dim i2 As Long
+   Dim i As Long
+   i1 = LBound(p, 1)
+   i2 = UBound(p, 1)
+   maxparam = p(i1)
+   If i1 = i2 Then
+      Exit Function
+   Else
+      For i = (i1 + 1) To i2
+         If maxparam < p(i) Then maxparam = p(i)
+      Next i
+   End If
+End Function
+
+' 関数やプロシジャの引数であれば、型と値をいっぺんに指定できる。
+' 外部からは使わない引数であるとして、Optional ByVal にすれば、
+' 内部変数の代わりに使ってもよいかもしれない。行儀悪いし、
+' 継続行を使わないと書けないけど。
 
 Private Sub Col2CIonSTrng(rngC As Range, _
                        ByRef CI() As Long, _
