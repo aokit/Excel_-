@@ -3,6 +3,23 @@ Option Explicit
 
 './x2p》＿別表＿.bas
 
+'
+' いちおう別表１については期待どおりで動く。ただし、中で使っている
+' 連続列最大行　の関数が正しくない。　１　を指定しても最後まで飛んで
+' しまう。つまり、E列が正解なのに、M列を指してしまう。
+' range_連続列最大行_range を直接変更すると、副作用の解消によるバグ
+' の発生になってしまうので、range_2_連続列最大行_range という関数を
+' 別に用意して、動作を確認したいところ。
+'
+
+Private Function range_2_連続列最大行_range(R_n As Range) As Range
+   '
+   ' このモジュールの中だけ、まずは、Call range_連続列最大行_range を
+   ' これに置き換える。他のところは随時置き換えて確認。最終的にもとの
+   ' を使わなくなったところで、もとのを論理的には消す。
+   '
+End Function
+
 ' ┏━━
 ' ┃▼９
 '
@@ -33,7 +50,7 @@ Sub 別表１２３への転記()
    Dim R_1 As Range
    Set R_1 = ThisWorkbook.Names("別表１").RefersToRange.Cells(1,1).Offset(1,0)
    Call PrintArrayOnRange(VP, R_1, 0, 2)
-   
+   Stop
    '
 End Sub
 
@@ -52,7 +69,7 @@ Private Sub PrintArrayOnRange(ByRef Ary As Variant, _
    ' 配列の列数、行数によって決める。
    '
    Set R_n = range_連続列最大行_range(R_n, 1)
-   If nr > 0 Then Set R_n = R_n.Resize(nr,)
+   If nr > 0 Then Set R_n = R_n.Resize(nr)
    If nc > 0 Then Set R_n = R_n.Resize(,nc)
    Dim L1 As Long
    Dim U1 As Long
@@ -63,7 +80,7 @@ Private Sub PrintArrayOnRange(ByRef Ary As Variant, _
    L2 = LBound(Ary, 2)
    U2 = UBound(Ary, 2)
    On Error GoTo OUTOFRANGE
-   If nr = -1 Then Set R_n = R_n.Resize(U1 - L1 + 1,)
+   If nr = -1 Then Set R_n = R_n.Resize(U1 - L1 + 1)
    If nc = -1 Then Set R_n = R_n.Resize(,U2 - L2 + 1)
    On Error GoTo 0
    Dim nrR As Long
@@ -71,7 +88,9 @@ Private Sub PrintArrayOnRange(ByRef Ary As Variant, _
    Dim ncR As Long
    ncR = R_n.Columns.Count
    Dim PAry As Variant
+   Dim BAry As Variant
    ReDim PAry(1 To nrR, 1 To ncR)
+   ReDim Bary(1 To nrR, 1 To ncR)
    Dim r As Long
    Dim c As Long
    For r = 1 To nrR
@@ -80,9 +99,12 @@ Private Sub PrintArrayOnRange(ByRef Ary As Variant, _
          On Error Resume Next
          PAry(r, c) = Ary(L1 + r - 1, L2 + c - 1)
          On Error GoTo 0
+         On Error Resume Next
+         If BAry(r, c) = BC Then PAry(r, c) = BC
+         On Error GoTo 0
       Next c
    Next r
-   
+   R_n = PAry
    Exit Sub
 OUTOFRANGE:
    Debug.Print("PrintArrayOnRange - 引数として与えられた配列の大きさが不正です")
