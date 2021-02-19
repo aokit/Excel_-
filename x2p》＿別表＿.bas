@@ -68,7 +68,13 @@ Private Sub PrintArrayOnRange(ByRef Ary As Variant, _
    ' nr = -1 の場合には列数を、nc = -1 の場合には行数を
    ' 配列の列数、行数によって決める。
    '
-   Set R_n = range_連続列最大行_range(R_n, 1)
+   ' Set R_n = range_連続列最大行_range(R_n, 1)
+   Set R_n = range_TabBottom_range(R_n, 1)
+   ' Stop
+   ' ここで上記で止めてみて、? R_n.address すると M 列まで
+   ' 入ってしまっていることがわかる。
+   Debug.Print(R_n.address)
+   Debug.Print("上記が M 列まで含んでいるようならここでは影響しないが、バグ。")
    If nr > 0 Then Set R_n = R_n.Resize(nr)
    If nc > 0 Then Set R_n = R_n.Resize(,nc)
    Dim L1 As Long
