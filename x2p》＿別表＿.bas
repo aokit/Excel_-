@@ -32,7 +32,7 @@ Sub 別表１２３への転記()
    Dim NT As String
    NT = "組織集計"
    Call NamedRange2Ary(NT, VT,, 3)
-   Stop
+   ' Stop
    ' このあと、VTから印刷用の配列に転記して、印刷用の配列を
    ' PrintArrayOnRangeで印刷する。
    Dim L1 As Long
@@ -46,11 +46,15 @@ Sub 別表１２３への転記()
       VP(i, 1) = VT(i, 1)
       VP(i, 2) = VT(i, 3)
    Next i
-   Stop
+   ' Stop
    Dim R_1 As Range
-   Set R_1 = ThisWorkbook.Names("別表１").RefersToRange.Cells(1,1).Offset(1,0)
+   ' Set R_1 = ThisWorkbook.Names("別表１").RefersToRange.Cells(1,1).Offset(1,0)
+   ' Set R_1 = ThisWorkbook.Names("別表１").RefersToRange.Offset(1,0)
+   ' ┗範囲全体を渡してもOK
+   Set R_1 = ThisWorkbook.Names("別表１").RefersToRange.Offset(1,0).Resize(1)
+   ' ┗範囲の最初の行を渡してもOK
    Call PrintArrayOnRange(VP, R_1, 0, 2)
-   Stop
+   ' Stop
    '
 End Sub
 
@@ -64,13 +68,15 @@ Private Sub PrintArrayOnRange(ByRef Ary As Variant, _
    ' nr, nc いずれについても、１以上の値が指定されていれば
    ' 範囲の行・列が明示的に指定されているものとする。
    ' nr = 0 の場合には列数を、nc = 0 の場合には行数を
-   ' 連続列最大行によって決める。
+   ' 連続列最大行によって拡張する。
    ' nr = -1 の場合には列数を、nc = -1 の場合には行数を
    ' 配列の列数、行数によって決める。
    '
    ' Set R_n = range_連続列最大行_range(R_n, 1)
-   Set R_n = range_TabBottom_range(R_n, 1)
-   ' Stop
+   ' Set R_n = range_TabBottom_range(R_n, 1)
+   Set R_n = range_n_TabBottom_range(R_n)
+   ' これはまだ、行の拡張のみ。列の拡張は対応していない。
+   Stop
    ' ここで上記で止めてみて、? R_n.address すると M 列まで
    ' 入ってしまっていることがわかる。
    Debug.Print(R_n.address)
