@@ -4,6 +4,100 @@ Option Explicit
 
 './x2p_tabjump.bas
 
+Function range_TabWiden_range(R_n As Range, _
+                              Optional k As Long = 1) As Range
+   '
+   ' range_TabBottom_range を改造。指定した範囲 R_n の 列 k の
+   ' 空セルでない行　まで　範囲 R_n を拡張して返す。
+   ' 関数が返した範囲に再度関数を適用しても範囲は不変となること
+   ' は定義から明らかなので、下方向の次の範囲を得るためには、
+   ' まず、返された範囲のひとつ下の行の　列 k で次の
+   ' 空セルでないセル を探すことが必要となる。これは
+   ' range_n_TabWiden_range （range_n_TabBottom_range の別名）
+   ' で記述してある。
+   ' そのため、 range_TabBottom_range で参照する引数 q は不要
+   ' となる。
+   ' 列 k の値が R_n の列数（R_n.Rows.Count）を超えていても、
+   ' 有効である。その列に対象として処理して、作用して、行を得て
+   ' 列については R_n の範囲を返す。
+   ' 引数 R_n の 列 k の下方向に空セルしかない場合は、範囲が
+   ' 存在しないものとして、引数で指定した範囲をそのまま返す。
+   '
+   Dim r0 As Long
+   Dim r1 As Long
+   On Error GoTo RowError
+   If (R_n.Cells(1,k).Value <> "") And _
+      (R_n.Cells(2,k).Value = "") Then
+      Set range_TabWiden_range = R_n
+   Else
+      r0 = R_n.Cells(1,k).Row
+      r1 = R_n.Cells(1,k).End(xlDown).Row
+      If r1 = Rows.Count Then
+         ' ↓・・・空セルしかなかった
+         Set range_TabWiden_range = R_n
+      Else
+         Set range_TabWiden_range = R_n.Resize((r1 - r0 + 1))
+      End If
+   End If
+   Exit Function
+RowError:
+   Debug.Print("range_TabWiden_rangeでエラー：指定した範囲が最下行に達しているなど")
+   Set range_TabWiden_range = R_n
+End Function
+
+Function range_n_TabWiden_range(R_n As Range, _
+                                Optional k As Long = 1, _
+                                Optional n As Long = 1) As Range
+   '
+   ' 指定した範囲 R_n の k 列目から下の方向に値のあるセルが
+   ' 連続している範囲を R_n から数えて、n 個めの範囲を返す。
+   ' k と n を記載しない場合はいずれも 1 とする。
+   ' 『列の最大行』に相当する。
+   ' range_TabWiden_range を n回『繰り返して』呼ぶ
+   ' ・・・・・・・・・・繰り返すために・・・・・・・・・・
+   ' １回めは、 range_TabWiden_range を実行して範囲を返す。
+   ' 　範囲の次（下）のセル（＝空セル）の範囲を Rt で２回め
+   ' 　へ引き継ぐ。
+   ' ２回め以降は、Rt を非空きセルの先頭へ移動し、
+   ' 　その後、 range_TabWiden_range を実行して範囲を返す。
+   ' 　範囲の次（下）のセル（＝空セル）の範囲を Rt で次回へ
+   ' 　引き継ぐ。
+   '
+   Dim q As Long
+   Dim Rt As Range
+   Dim Rs As Range
+   Set Rt = R_n
+   Set range_n_TabWiden_range = R_n
+   On Error GoTo EndOfRange
+   For q = 1 To n
+      If q > 1 Then
+         Set Rt = Rt.Cells(1,k).End(xlDown).Offset(0,-(k-1)).Resize(1,Rt.Columns.Count)
+         ' Set Rt = Rt.Cells(1,k).End(xlDown).Offset(0,-(k-1)).Resize(1,R_n.Columns.Count)
+      End If
+      Set Rs = range_n_TabWiden_range
+      Set Rt = range_TabWiden_range(Rt, k)
+      If (Rt.Row + Rt.Rows.Count - 1) = Rows.Count Then
+         Set range_n_TabWiden_range = Rs
+         Debug.Print("範囲が指定された数に足りませんでした。")
+         Exit Function
+      Else
+         Set range_n_TabWiden_range = Rt
+         Set Rt = Rt.Offset(1,0).Cells(Rt.Rows.Count,1).Resize(1,Rt.Columns.Count)
+         ' Set Rt = Rt.Offset(1,0).Cells(Rt.Rows.Count,1).Resize(1,R_n.Columns.Count)
+      End If
+   Next q
+   On Error GoTo 0
+   Exit Function
+   '
+EndOFRange:
+   range_n_TabWiden_range = R_n
+   Debug.Print("範囲が指定された数に足りませんでした。")
+End Function
+
+' ========================================================================================
+' ========================================================================================
+' ========================================================================================
+
 Function range_TabBottom_range(R_n As Range, _
                                Optional k As Long = 1, _
                                Optional q As Long = 1) As Range
@@ -38,6 +132,7 @@ Function range_TabBottom_range(R_n As Range, _
          ' ? range_TabBottom_range(Range("A4:B4"),2).Address
          ' $A$4:$B$1048576
          ' → $A4:$B4
+         ' 範囲が存在しないときは、引数で指定した範囲を返す。
       Else
          Set range_TabBottom_range = R_n.Resize((r1 - r0 + 1))
       End If
@@ -96,7 +191,8 @@ Function range_n_TabBottom_range(R_n As Range, _
          ' Stop
       End If
       Set Rs = range_n_TabBottom_range
-      Set Rt = range_TabBottom_range(Rt, k, q)
+      ' Set Rt = range_TabBottom_range(Rt, k, q)
+      Set Rt = range_TabBottom_range(Rt, k)
       ' Stop
       If (Rt.Row + Rt.Rows.Count - 1) = Rows.Count Then
          Set range_n_TabBottom_range = Rs

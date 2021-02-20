@@ -23,7 +23,7 @@ End Function
 ' ┏━━
 ' ┃▼９
 '
-Sub 別表１２３への転記()
+Sub a_別表１２３への転記()
    '
    ' ダッシュボード上の範囲を指定して別表１から別表３までのそれぞれの範囲へ
    ' 転記する。
@@ -58,6 +58,62 @@ Sub 別表１２３への転記()
    '
 End Sub
 
+Sub 別表１２３への転記()
+   '
+   ' ダッシュボード上の範囲を指定して別表１から別表３までのそれぞれの範囲へ
+   ' 転記する。
+   Dim cas(1 To 2) As Long
+   cas(1) = 1
+   cas(2) = 3
+   Call Sheet2colTableCopy("組織集計", cas(), "別表１")
+   cas(1) = 1
+   cas(2) = 2
+   Call Sheet2colTableCopy("取引集計", cas(), "別表２")
+   cas(1) = 5
+   cas(2) = 6
+   Call Sheet2colTableCopy("仕向地集計", cas(), "別表３")
+   '
+   '
+End Sub
+
+Sub Sheet2colTableCopy(strName1 As String, cas() As Long, _
+                       strName2 As String)
+   '
+   ' cas - column assign
+   ' Dim cas(1 To "c1") As Long
+   ' 別表１の場合：cas(1)=1, cas(2)=3
+   ' 別表２の場合：cas(1)=1, cas(2)=2
+   '
+   Dim R_1 As Range
+   ' Set R_1 = ThisWorkbook.Names(strName2).RefersToRange.Offset(1,0).Resize(1)
+   ' ┗範囲の最初の行を渡してもOK
+   Set R_1 = ThisWorkbook.Names(strName2).RefersToRange.Offset(1,0)
+   Dim r1 As Long
+   Dim c1 As Long
+   r1 = R_1.Rows.Count
+   ' c1 = R_1.Columns.Count
+   c1 = 2
+   Dim VT As Variant
+   Dim NT As String
+   NT = strName1
+   Call NamedRange2Ary(NT, VT, r1, cas(c1))
+   Dim L1 As Long
+   Dim U1 As Long
+   L1 = LBound(VT, 1)
+   U1 = UBound(VT, 1)
+   Dim i As Long
+   Dim VP As Variant
+   ReDim VP(L1 To U1, 1 To 2)
+   For i = L1 To U1
+      VP(i, 1) = VT(i, cas(1))
+      VP(i, 2) = VT(i, cas(2))
+   Next i
+   ' Stop
+   
+   Call PrintArrayOnRange(VP, R_1, 0, 2)
+   '
+End Sub
+
 Private Sub PrintArrayOnRange(ByRef Ary As Variant, _
                               R_n As Range, _
                               Optional nr As Long = 0, _
@@ -74,9 +130,10 @@ Private Sub PrintArrayOnRange(ByRef Ary As Variant, _
    '
    ' Set R_n = range_連続列最大行_range(R_n, 1)
    ' Set R_n = range_TabBottom_range(R_n, 1)
-   Set R_n = range_n_TabBottom_range(R_n)
+   ' Set R_n = range_n_TabBottom_range(R_n)
+   Set R_n = range_n_TabWiden_range(R_n)
    ' これはまだ、行の拡張のみ。列の拡張は対応していない。
-   Stop
+   ' Stop
    ' ここで上記で止めてみて、? R_n.address すると M 列まで
    ' 入ってしまっていることがわかる。
    Debug.Print(R_n.address)
