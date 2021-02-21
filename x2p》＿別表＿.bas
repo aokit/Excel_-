@@ -87,7 +87,9 @@ Sub Sheet2colTableCopy(strName1 As String, cas() As Long, _
    Dim R_1 As Range
    ' Set R_1 = ThisWorkbook.Names(strName2).RefersToRange.Offset(1,0).Resize(1)
    ' ┗範囲の最初の行を渡してもOK
-   Set R_1 = ThisWorkbook.Names(strName2).RefersToRange.Offset(1,0)
+   ' Set R_1 = ThisWorkbook.Names(strName2).RefersToRange.Offset(1,0)
+   ' ひょっとして、以下でも大丈夫？
+   Set R_1 = Range(strName2).Offset(1,0)
    Dim r1 As Long
    Dim c1 As Long
    r1 = R_1.Rows.Count
@@ -109,7 +111,6 @@ Sub Sheet2colTableCopy(strName1 As String, cas() As Long, _
       VP(i, 2) = VT(i, cas(2))
    Next i
    ' Stop
-   
    Call PrintArrayOnRange(VP, R_1, 0, 2)
    '
 End Sub
@@ -189,6 +190,8 @@ Sub NamedRange2Ary(ByVal strName As String, _
    '
    Dim R_n As Range
    Set R_n = ThisWorkbook.Names(strName).RefersToRange
+   ' ここは、以下だとエラー。なんでかな。
+   ' Set R_n = Range(strName)
    Call Range2Ary(R_n, Ary, nr, nc)
    '
 End Sub
