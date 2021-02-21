@@ -482,16 +482,32 @@ Sub 許可特例等抽出()
    Dim q As Boolean
 
    Dim yen As Long
+
+   Dim n_all As Long
+   Dim n_houkatsu As Long
+   Dim n_shougaku As Long
+   Dim n_kouchi As Long
+   Dim n_kokunai As Long
+   Dim n_higaitou As Long
+
+   n_all = 0
+   n_houkatsu = 0
+   n_shougaku = 0
+   n_kouchi = 0
+   n_kokunai = 0
+   n_higaitou = 0
    
    For i = 2 To U2
       q = False
       If p有効期間(str承認記録(i, 2)) Then
+         n_all = n_all + 1
          c1 = str承認記録(i, 1)
          c17 = str承認記録(i, 17)
          c18 = str承認記録(i, 18)
          c19 = str承認記録(i, 19)
          c20 = str承認記録(i, 20)
          If (c18 = "包括許可適用") Or (c20 = "包括許可適用") Then
+            n_houkatsu = n_houkatsu + 1
             A1(i1) = c1
             ' ┏＜依存＞承認記録のフィールド構造
             A1A(i1, 1) = str承認記録(i, 1) ' 管理番号
@@ -522,6 +538,7 @@ Sub 許可特例等抽出()
             q = True
          End If
          If (Right(c18, 2) = "特例") Then ' 少額特例
+            n_shougaku = n_shougaku + 1
             A4(i4) = c1
             ' ┏＜依存＞承認記録のフィールド構造
             A4A(i4, 1) = str承認記録(i, 1) ' 管理番号
@@ -542,14 +559,19 @@ Sub 許可特例等抽出()
             q = True
          End If
          If (Right(c20, 2) = "特例") Then
+            n_kouchi = n_kouchi + 1
             A5(i5) = c1
             i5 = i5 + 1
             q = True
          End If
          If ((Left(c17, 2) = "該当") Or (Left(c19, 2) = "該当")) And (Not q) Then
+            ' 該当だが国内取引／もしくは、失効による個別許可申請や届出などの場合
+            n_kokunai = n_kokunai + 1
             A6(i6) = c1
             i6 = i6 + 1
+            q = True
          End If
+         If (Not q) Then n_higaitou = n_higaitou + 1
       End If
    Next i
 
@@ -620,7 +642,13 @@ Sub 許可特例等抽出()
    Call PrintArrayOnNamedRange("少額特例┏",A4V,7,-4)
    ' ┗なんか、Root からFormat持ってこられてないような・・・
    '   PrintArrayOnNamedRangeのバグ？
-   
+   Range("期間の審査件数") = n_all
+   Range("包括許可適用件数") = n_houkatsu
+   Range("少額特例適用件数") = n_shougaku
+   Range("公知特例適用件数") = n_kouchi
+   Range("該当国内取引件数") = n_kokunai
+   Range("リスト規制非該当件数") = n_higaitou
+   '
 End Sub
 
 '

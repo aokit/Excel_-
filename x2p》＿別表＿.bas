@@ -65,31 +65,61 @@ Sub 別表１２３への転記()
    Dim cas(1 To 2) As Long
    cas(1) = 1
    cas(2) = 3
-   Call Sheet2colTableCopy("組織集計", cas(), "別表１")
+   Call Sheet2colTableCopy("組織集計", cas(), "別表１", 1)
    cas(1) = 1
    cas(2) = 2
-   Call Sheet2colTableCopy("取引集計", cas(), "別表２")
+   Call Sheet2colTableCopy("取引集計", cas(), "別表２", 1)
    cas(1) = 5
    cas(2) = 6
-   Call Sheet2colTableCopy("仕向地集計", cas(), "別表３")
+   Call Sheet2colTableCopy("仕向地集計", cas(), "別表３", 1)
    '
+   ' Range("表１").Cells(3,4) = Range("包括許可適用件数")
+   ' Range("表１").Cells(4,4) = Range("少額特例適用件数")
+   ' Range("表１").Cells(5,4) = Range("該当国内取引件数")
+   ' Range("表１").Cells(6,4) = Range("リスト規制非該当件数")
+   ' Range("表１").Cells(7,4) = Range("期間の審査件数")
+   Call SheetNamedCellCopy("包括許可適用件数", "表１", 3, 4)
+   Call SheetNamedCellCopy("少額特例適用件数", "表１", 4, 4)
+   Call SheetNamedCellCopy("該当国内取引件数", "表１", 5, 4)
+   Call SheetNamedCellCopy("リスト規制非該当件数", "表１", 6, 4)
+   Call SheetNamedCellCopy("期間の審査件数", "表１", 7, 4)
    '
 End Sub
 
+Sub SheetNamedCellCopy(strName1 As String, _
+                       strName2 As String, _
+                       r0 As Long, _
+                       c0 As Long)
+   Dim r1 As Range
+   Dim r2 As Range
+   Set r1 = ThisWorkbook.Names(strName1).RefersToRange
+   Set r2 = ThisWorkbook.Names(strName2).RefersToRange.Cells(r0, c0)
+   r2.Value = CStr(r1.Value)
+End Sub
+
 Sub Sheet2colTableCopy(strName1 As String, cas() As Long, _
-                       strName2 As String)
+                       strName2 As String, rOff As Long)
    '
-   ' cas - column assign
+   ' シート上での２列の表のコピー：
+   ' 　strName1 で指定された範囲に２列で記載されている表を strName2 で
+   ' 　指定された範囲にコピーする。配列 cas(1 To 2)で、cas(i)=j により
+   ' 　指定することでコピー先の i 列目にコピー元の j 列をコピーする。
+   ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+   ' ：cas - column assign
    ' Dim cas(1 To "c1") As Long
    ' 別表１の場合：cas(1)=1, cas(2)=3
    ' 別表２の場合：cas(1)=1, cas(2)=2
+   ' 別表３の場合：cas(1)=5, cas(2)=6
    '
    Dim R_1 As Range
    ' Set R_1 = ThisWorkbook.Names(strName2).RefersToRange.Offset(1,0).Resize(1)
    ' ┗範囲の最初の行を渡してもOK
-   ' Set R_1 = ThisWorkbook.Names(strName2).RefersToRange.Offset(1,0)
+   Set R_1 = ThisWorkbook.Names(strName2).RefersToRange.Offset(1,0)
    ' ひょっとして、以下でも大丈夫？
-   Set R_1 = Range(strName2).Offset(1,0)
+   ' Set R_1 = Range(strName2).Offset(rOff,0)
+   ' このシートで呼ぶときは大丈夫だろうけど他のシートで呼ぶと見えないはず。
+   Debug.Print(strName2)
+   Debug.Print(R_1.Address)
    Dim r1 As Long
    Dim c1 As Long
    r1 = R_1.Rows.Count
@@ -190,8 +220,10 @@ Sub NamedRange2Ary(ByVal strName As String, _
    '
    Dim R_n As Range
    Set R_n = ThisWorkbook.Names(strName).RefersToRange
+   On Error Resume Next
    ' ここは、以下だとエラー。なんでかな。
-   ' Set R_n = Range(strName)
+   Set R_n = Range(strName)
+   On Error GoTo 0
    Call Range2Ary(R_n, Ary, nr, nc)
    '
 End Sub
