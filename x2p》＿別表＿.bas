@@ -138,7 +138,7 @@ Private Sub PrintArrayOnRange(ByRef Ary As Variant, _
    ' ここで上記で止めてみて、? R_n.address すると M 列まで
    ' 入ってしまっていることがわかる。
    Debug.Print(R_n.address)
-   Debug.Print("上記が M 列まで含んでいるようならここでは影響しないが、バグ。")
+   ' Debug.Print("上記が M 列まで含んでいるようならここでは影響しないが、バグ。")
    If nr > 0 Then Set R_n = R_n.Resize(nr)
    If nc > 0 Then Set R_n = R_n.Resize(,nc)
    Dim L1 As Long
