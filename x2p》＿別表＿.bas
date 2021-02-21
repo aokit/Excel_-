@@ -23,41 +23,6 @@ End Function
 ' ┏━━
 ' ┃▼９
 '
-Sub a_別表１２３への転記()
-   '
-   ' ダッシュボード上の範囲を指定して別表１から別表３までのそれぞれの範囲へ
-   ' 転記する。
-   '
-   Dim VT As Variant
-   Dim NT As String
-   NT = "組織集計"
-   Call NamedRange2Ary(NT, VT,, 3)
-   ' Stop
-   ' このあと、VTから印刷用の配列に転記して、印刷用の配列を
-   ' PrintArrayOnRangeで印刷する。
-   Dim L1 As Long
-   Dim U1 As Long
-   L1 = LBound(VT, 1)
-   U1 = UBound(VT, 1)
-   Dim i As Long
-   Dim VP As Variant
-   ReDim VP(L1 To U1, 1 To 2)
-   For i = L1 To U1
-      VP(i, 1) = VT(i, 1)
-      VP(i, 2) = VT(i, 3)
-   Next i
-   ' Stop
-   Dim R_1 As Range
-   ' Set R_1 = ThisWorkbook.Names("別表１").RefersToRange.Cells(1,1).Offset(1,0)
-   ' Set R_1 = ThisWorkbook.Names("別表１").RefersToRange.Offset(1,0)
-   ' ┗範囲全体を渡してもOK
-   Set R_1 = ThisWorkbook.Names("別表１").RefersToRange.Offset(1,0).Resize(1)
-   ' ┗範囲の最初の行を渡してもOK
-   Call PrintArrayOnRange(VP, R_1, 0, 2)
-   ' Stop
-   '
-End Sub
-
 Sub 別表１２３への転記()
    '
    ' ダッシュボード上の範囲を指定して別表１から別表３までのそれぞれの範囲へ
@@ -73,11 +38,9 @@ Sub 別表１２３への転記()
    cas(2) = 6
    Call Sheet2colTableCopy("仕向地集計", cas(), "別表３", 1)
    '
-   ' Range("表１").Cells(3,4) = Range("包括許可適用件数")
-   ' Range("表１").Cells(4,4) = Range("少額特例適用件数")
-   ' Range("表１").Cells(5,4) = Range("該当国内取引件数")
-   ' Range("表１").Cells(6,4) = Range("リスト規制非該当件数")
    ' Range("表１").Cells(7,4) = Range("期間の審査件数")
+   ' ┗名付けた範囲がこのスクリプトと同じシートになければこの記法は
+   ' 　使えない。なので、以下、プロシジャに。
    Call SheetNamedCellCopy("包括許可適用件数", "表１", 3, 4)
    Call SheetNamedCellCopy("少額特例適用件数", "表１", 4, 4)
    Call SheetNamedCellCopy("該当国内取引件数", "表１", 5, 4)
@@ -90,11 +53,14 @@ Sub SheetNamedCellCopy(strName1 As String, _
                        strName2 As String, _
                        r0 As Long, _
                        c0 As Long)
+   ' strName1 と名付けたセルの内容を strName2 と名付けた範囲のセル
+   ' (r0,c0)に書き込む。
    Dim r1 As Range
    Dim r2 As Range
    Set r1 = ThisWorkbook.Names(strName1).RefersToRange
    Set r2 = ThisWorkbook.Names(strName2).RefersToRange.Cells(r0, c0)
-   r2.Value = CStr(r1.Value)
+   ' r2.Value = CStr(r1.Value)
+   r2.Value = r1.Value
 End Sub
 
 Sub Sheet2colTableCopy(strName1 As String, cas() As Long, _

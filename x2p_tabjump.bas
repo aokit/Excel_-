@@ -31,7 +31,13 @@ Function range_TabWiden_range(R_n As Range, _
       Set range_TabWiden_range = R_n
    Else
       r0 = R_n.Cells(1,k).Row
-      r1 = R_n.Cells(1,k).End(xlDown).Row
+      ' r1 = R_n.Cells(1,k).End(xlDown).Row
+      ' ┗１行だけではなくて
+      ' ┏複数行の範囲が指定されたときは、指定された範囲の
+      ' ┃最後の行から .End(xlDown) をする。これで、
+      ' ┃指定された範囲内に 空欄 があっても指定された範囲
+      ' ┃をもとに範囲を返すようになる。
+      r1 = R_n.Cells(R_n.Rows.Count,k).End(xlDown).Row
       If r1 = Rows.Count Then
          ' ↓・・・空セルしかなかった
          Set range_TabWiden_range = R_n
