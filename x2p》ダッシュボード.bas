@@ -312,6 +312,9 @@ Sub 仕向地別集計()
    '
    ' Call PrintArrayOnNamedRange("未割当別名", ary未割当仕向, 1)
    Call PrintArrayOnNamedRange("未割当別名", ary未割当仕向)
+   ' 承認記録のなかで未割当別名の取引を抽出
+   ' Stop
+   Call 承認記録未割当抽出("未割当別名", "承認記録")
    'Call PrintArrayOnNamedRange("未割当別名", Transpose(ary未割当仕向), 1)
    ' Dim aryT As Variant
    ' Dim Ur As Long
@@ -327,6 +330,43 @@ Sub 仕向地別集計()
    ' 
    ' Stop
    ' Call 仕向地別名回数表示("仕向地別名回数")
+End Sub
+
+Sub 承認記録未割当抽出(str未割当別名, str承認記録)
+   Dim R1 As Range
+   Set R1 = ThisWorkbook.Names(str未割当別名).RefersToRange
+   Dim AR() As Variant
+   Dim A() As Variant
+   ' 　　┏Range2Aryがグローバルに見つからないというので（なんででしょう）
+   Call Range2Ary_承認記録未割当抽出(R1,AR,,2)
+   ReDim A(LBound(AR, 1) To UBound(AR, 1))
+   Dim i As Long
+   For i = LBound(AR, 1) To UBound(AR, 1)
+      A(i) = AR(i, UBound(AR, 2))
+   Next i
+   ThisWorkbook.Names(str承認記録).RefersToRange.AutoFilter 1, A, xlFilterValues
+End Sub
+
+' ┏別に定義してあるんだがなぁ・・・なぜか、ローカルに定義しないと
+' ┃　見つからない、という。
+Private Sub Range2Ary_承認記録未割当抽出(R_n As Range, _
+              ByRef Ary As Variant, _
+              Optional nr As Long = 0, _
+              Optional nc As Long = 0)
+   '
+   ' R_n の範囲（の左上のセル）を左上とする nr 行 nc 列の
+   ' 範囲を引数の配列に格納する。
+   '
+   ' Ary じゃなくて Ary() と書かないとだめ？
+   '
+   Dim r0 As Long
+   Dim c0 As Long
+   r0 = R_n.Row
+   c0 = R_n.Column
+   Set R_n = range_連続列最大行_range(R_n, 1)
+   If nr > 0 Then Set R_n = R_n.Resize(nr)
+   If nc > 0 Then Set R_n = R_n.Resize(,nc)
+   Ary = R_n
 End Sub
 
 Private Sub 仕向地集計(strNameD As String, _
@@ -929,6 +969,7 @@ Private Sub 承認記録読み取り(str_承認記録() As String)
    ' 　引数として指定した配列に、範囲の セルの値 をString型で返す。
    ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
    '
+   Call 承認記録フィルタ解除()
    Call NamedRangeSQ2ArrStr("承認記録",str_承認記録)
 End Sub
 
@@ -1674,3 +1715,7 @@ Private Sub NamedRange2ary(strName As String, _
    aryV = rngC
 End Sub
 
+Sub 承認記録フィルタ解除()
+   On Error Resume Next
+   ThisWorkbook.Names("承認記録").RefersToRange.Parent.ShowAllData
+End Sub

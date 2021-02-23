@@ -189,6 +189,7 @@ Sub NamedRange2Ary(ByVal strName As String, _
    On Error Resume Next
    ' ここは、以下だとエラー。なんでかな。
    Set R_n = Range(strName)
+   ' 答え： strName がこのシートの名前ではないから。
    On Error GoTo 0
    Call Range2Ary(R_n, Ary, nr, nc)
    '
