@@ -128,6 +128,7 @@ End Sub
 ' ┃▼３
 '
 Sub 組織別個別審査件数集計()
+   ' Call 承認記録フィルタ解除()
    Dim str承認記録() As String
    Call 承認記録読み取り(str承認記録)
    Dim dic組織辞書 As New Dictionary
@@ -205,6 +206,7 @@ End Sub
 '
 Sub 取引区分別個別審査件数集計()
    '
+   ' Call 承認記録フィルタ解除()
    Dim str承認記録() As String
    Call 承認記録読み取り(str承認記録)
    '
@@ -359,10 +361,13 @@ Private Sub 仕向地集計(strNameD As String, _
    ' ┗・・・未割当の仕向を格納する（返すときには未使用を削る）
    Dim nYAD As Long
    nYAD = 0
+   '
+   ' Call 承認記録フィルタ解除()
    Dim str承認記録() As String
    ' Call 承認記録読み取り(str承認記録)
    ' Call NamedRangeSQ2ArrStr("承認記録", str承認記録)
-   Call NamedRangeSQ2ArrStr(strNameD, str承認記録)
+   ' Call NamedRangeSQ2ArrStr(strNameD, str承認記録)
+   Call 承認記録読み取り(strNameD, str承認記録)
    ' Stop
    ' ここから　配列　str承認記録　に対して　▼３／▼５を参考にして集計処理を行う。
    Dim U2 As Long
@@ -433,6 +438,7 @@ Sub 許可特例等抽出()
    '
    '
    ' ▼３のコードを流用
+   ' Call 承認記録フィルタ解除()
    Dim str承認記録() As String
    Call 承認記録読み取り(str承認記録)
    Dim U2 As Long
@@ -929,6 +935,7 @@ Private Sub 承認記録読み取り(str_承認記録() As String)
    ' 　引数として指定した配列に、範囲の セルの値 をString型で返す。
    ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
    '
+   Call 承認記録フィルタ解除()
    Call NamedRangeSQ2ArrStr("承認記録",str_承認記録)
 End Sub
 
@@ -1674,3 +1681,7 @@ Private Sub NamedRange2ary(strName As String, _
    aryV = rngC
 End Sub
 
+Sub 承認記録フィルタ解除()
+   On Error Resume Next
+   ThisWorkbook.Names("承認記録").RefersToRange.Parent.ShowAllData
+End Sub
