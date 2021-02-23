@@ -279,7 +279,8 @@ Sub 仕向地別集計()
    ' 　　　　dic仕向番号に読み込まれていることがわかる
    Call 仕向地集計名配列生成("仕向地別名", nClass, ary集計名件数金額)
    ' ┗・・・
-   Call 仕向地集計("承認記録", 11, 10, dic仕向番号, ary集計名件数金額, ary未割当仕向)
+   ' Call 仕向地集計("承認記録", 1, 11, 10, dic仕向番号, ary集計名件数金額, ary未割当仕向)
+   Call 仕向地集計("承認記録", dic仕向番号, ary集計名件数金額, ary未割当仕向)
    ' Stop
    ' ┗・・・このあと　集計名件数金額　と　未割当仕向　を表示する
    ' ┏仕向地集計名件数金額表示
@@ -309,7 +310,8 @@ Sub 仕向地別集計()
    Call PrintArrayOnNamedRange("仕向地金額＿トップ", ary集計名金額, 2, -4)
 
    '
-   Call PrintArrayOnNamedRange("未割当別名", ary未割当仕向, 1)
+   ' Call PrintArrayOnNamedRange("未割当別名", ary未割当仕向, 1)
+   Call PrintArrayOnNamedRange("未割当別名", ary未割当仕向)
    'Call PrintArrayOnNamedRange("未割当別名", Transpose(ary未割当仕向), 1)
    ' Dim aryT As Variant
    ' Dim Ur As Long
@@ -328,12 +330,9 @@ Sub 仕向地別集計()
 End Sub
 
 Private Sub 仕向地集計(strNameD As String, _
-                       iC_仕向地 As Long, _
-                       iC_金額 As Long, _
                        ByRef dicDIN As Dictionary, _
                        ByRef aryNTM() As Variant, _
                        ByRef aryYAD() As Variant)
-   '...................ByRef aryYAD() As String)
    ' aryYAD　未割当仕向　の扱い
    ' 表示させるときに aryYAD も Variant でないと型が一致せずコンパイルエラー
    ' を起こしてしまうので、なんだか腑に落ちないが Variant にした。
@@ -341,19 +340,22 @@ Private Sub 仕向地集計(strNameD As String, _
    ' 移し替えている。
    '
    ' 第１引数：strNameD：の名前が与えられた範囲から承認データを読み取る。
-   ' 第２引数：iC_仕向地：承認データにおける仕向地のカラム番号
-   ' 第３引数：iC_金額：承認データにおける金額のカラム番号
-   ' 第４引数：dicDIN：仕向地の別名辞書
-   ' 第５引数：aryNTM：（返す値）仕向地名・合計金額・合計回数の表
-   ' 第６引数：aryYAD：（返す値）割当解決ができなかった仕向地の表
+   ' 第２引数：dicDIN：仕向地の別名辞書
+   ' 第３引数：aryNTM：（返す値）仕向地名・合計金額・合計回数の表
+   ' 第４引数：aryYAD：（返す値）割当解決ができなかった仕向地と管理番号の表
    ' 
-   ' ("承認記録", 11, 10, dic仕向番号, ary集計名件数金額)
-   ' 第６引数：未割り当て仕向地を返す（）
-   '
    ' ReDim aryYAD(1 To 200)
    ' ２次元にしておく
-   ' ReDim aryYAD(1 To 200, 1 To 1)
-   Dim TaryYAD(1 To 200)
+   ' ReDim aryYAD(1 To 200, 1 To 1)→  ... 1 To 2)
+   Dim iC_管理番号 As Long
+   Dim iC_承認日 As Long
+   Dim iC_仕向地 As Long
+   Dim iC_金額 As Long
+   iC_管理番号 = 1
+   iC_承認日 = 2
+   iC_仕向地 = 11
+   iC_金額 = 10
+   Dim TaryYAD(1 To 200, 1 To 2)
    ' ┗・・・未割当の仕向を格納する（返すときには未使用を削る）
    Dim nYAD As Long
    nYAD = 0
@@ -372,8 +374,6 @@ Private Sub 仕向地集計(strNameD As String, _
    Next i
    ' str承認記録　の全行をスキャン
    U2 = UBound(str承認記録, 1)
-   Dim iC_承認日 As Long
-   iC_承認日 = 2
    Dim IX As Long
    Dim str仕向地 As String
    Dim str金額 As String
@@ -402,21 +402,24 @@ Private Sub 仕向地集計(strNameD As String, _
             ' 　名付け範囲『別名回数』に０回として表示するために
             ' 　配列を構成しておく予定。
             nYAD = nYAD + 1
-            TaryYAD(nYAD) = str仕向地
+            TaryYAD(nYAD, 1) = str仕向地
+            TaryYAD(nYAD, 2) = str承認記録(i, iC_管理番号)
          End If
       End If
    Next i
    If nYAD = 0 Then
       ' 未割当仕向がまったく無かったとき、配列もなくしてしまうと例外処理
       ' が面倒なので、特別に１要素で空文字列の配列にしておく。
-      ReDim aryYAD(1 To 1, 1 To 1)
+      ReDim aryYAD(1 To 1, 1 To 2)
       aryYAD(1, 1) = ""
+      aryYAD(1, 2) = ""
    Else
-      ReDim aryYAD(1 To nYAD, 1 To 1)
+      ReDim aryYAD(1 To nYAD, 1 To 2)
       ' ┗・・・未割当仕向の配列で書き込んでいないところを切り落とす
       ' 　　　　名付け範囲『別名回数』に０回として表示する対象
       For j = 1 To nYAD
-         aryYAD(j, 1) = TaryYAD(j)
+         aryYAD(j, 1) = TaryYAD(j, 1)
+         aryYAD(j, 2) = TaryYAD(j, 2)
       Next j
    End If
    ' Stop
