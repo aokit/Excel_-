@@ -518,7 +518,7 @@ Sub 許可特例等抽出()
             ' A1A(i1, 6) = str承認記録(i, 15) ' 申請者所属＿本部変換前
             申請者所属 = str承認記録(i, 15) ' 申請者所属＿本部変換前
             yen = str承認記録(i, 10) ' 金額＿円
-            A1A(i1, 7) = CStr(CLng(yen) / 1000)
+            A1A(i1, 7) = CStr(Int(CLng(yen) / 1000))
             If (dic組織辞書.Exists(申請者所属)) Then
                A1A(i1, 6) = PickHeadWord(dic組織辞書, 申請者所属)
             Else
@@ -549,7 +549,7 @@ Sub 許可特例等抽出()
             ' A1A(i1, 6) = str承認記録(i, 15) ' 申請者所属＿本部変換前
             申請者所属 = str承認記録(i, 15) ' 申請者所属＿本部変換前
             yen = str承認記録(i, 10) ' 金額＿円
-            A4A(i4, 7) = CStr(CLng(yen) / 1000)
+            A4A(i4, 7) = CStr(Int(CLng(yen) / 1000))
             If (dic組織辞書.Exists(申請者所属)) Then
                A4A(i4, 6) = PickHeadWord(dic組織辞書, 申請者所属)
             Else
