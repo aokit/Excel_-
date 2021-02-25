@@ -311,7 +311,9 @@ Sub 仕向地別集計()
 
    '
    ' Call PrintArrayOnNamedRange("未割当別名", ary未割当仕向, 1)
-   Call PrintArrayOnNamedRange("未割当別名", ary未割当仕向)
+   ' Call PrintArrayOnNamedRange("未割当別名", ary未割当仕向)
+   ' ┏消すために明示的に列数を指定する。
+   Call PrintArrayOnNamedRange("未割当別名", ary未割当仕向, 2)
    ' 承認記録のなかで未割当別名の取引を抽出
    ' Stop
    Call 承認記録未割当抽出("未割当別名", "承認記録")
@@ -338,6 +340,7 @@ Sub 承認記録未割当抽出(str未割当別名, str承認記録)
    Dim AR() As Variant
    Dim A() As Variant
    ' 　　┏Range2Aryがグローバルに見つからないというので（なんででしょう）
+   ' 　　┃　誰か消してるのかな？　ローカル（すぐ次）に定義しておいた。
    Call Range2Ary_承認記録未割当抽出(R1,AR,,2)
    ReDim A(LBound(AR, 1) To UBound(AR, 1))
    Dim i As Long
@@ -1163,6 +1166,12 @@ Private Sub NZrowCompaction(strName As String, _
       End If
    Next i
    ' Dim NZC() As Variant
+   If j = 0 Then
+      ' 該当がないときには 1 行の空行をつくる
+      ReDim NZC(1 To 1, 1 To cols)
+      Exit Sub
+   End If
+   '
    ReDim NZC(1 To j, 1 To cols)
    For i = 1 To j
       NZC(i, 1) = strNZ(i, 1)
