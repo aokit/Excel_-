@@ -405,9 +405,7 @@ Private Sub 仕向地集計(strNameD As String, _
    Dim str承認記録() As String
    ' Call 承認記録読み取り(str承認記録)
    ' Call NamedRangeSQ2ArrStr("承認記録", str承認記録)
-   ' Call NamedRangeSQ2ArrStr(strNameD, str承認記録)
-   ' ┣・・・strNameD を参照しないで承認記録読み取りの専用プロシジャを使う。
-   Call 承認記録読み取り(str承認記録)
+   Call NamedRangeSQ2ArrStr(strNameD, str承認記録)
    ' Stop
    ' ここから　配列　str承認記録　に対して　▼３／▼５を参考にして集計処理を行う。
    Dim U2 As Long
@@ -1730,5 +1728,3 @@ Sub 承認記録フィルタ解除()
    On Error Resume Next
    ThisWorkbook.Names("承認記録").RefersToRange.Parent.ShowAllData
 End Sub
-
-' == End ==
