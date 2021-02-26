@@ -339,12 +339,24 @@ Sub 承認記録未割当抽出(str未割当別名, str承認記録)
    Set R1 = ThisWorkbook.Names(str未割当別名).RefersToRange
    Dim AR() As Variant
    Dim A() As Variant
+   Dim LB As Long
+   Dim UB As Long
+   ' Stop
    ' 　　┏Range2Aryがグローバルに見つからないというので（なんででしょう）
    ' 　　┃　誰か消してるのかな？　ローカル（すぐ次）に定義しておいた。
    Call Range2Ary_承認記録未割当抽出(R1,AR,,2)
-   ReDim A(LBound(AR, 1) To UBound(AR, 1))
+   LB = LBound(AR, 1)
+   UB = UBound(AR, 1)
+   ' ┏１行しかなくて第１列が空の文字列だったら、未割当仕向地はなかったと
+   If LB = UB And AR(LB, 1) = "" Then
+      ' Stop
+      Debug.Print("『承認記録未割当抽出』で未割当仕向地がありませんでした")
+      Exit Sub
+   End If
+   '
+   ReDim A(LB To UB)
    Dim i As Long
-   For i = LBound(AR, 1) To UBound(AR, 1)
+   For i = LB To UB
       A(i) = AR(i, UBound(AR, 2))
    Next i
    ThisWorkbook.Names(str承認記録).RefersToRange.AutoFilter 1, A, xlFilterValues
@@ -364,12 +376,36 @@ Private Sub Range2Ary_承認記録未割当抽出(R_n As Range, _
    '
    Dim r0 As Long
    Dim c0 As Long
+   Dim c1 As Long
+   Dim RR As Range
+   Dim V1 As Variant
+   Dim i As Long
    r0 = R_n.Row
    c0 = R_n.Column
-   Set R_n = range_連続列最大行_range(R_n, 1)
-   If nr > 0 Then Set R_n = R_n.Resize(nr)
-   If nc > 0 Then Set R_n = R_n.Resize(,nc)
-   Ary = R_n
+   Set RR = range_連続列最大行_range(R_n, 1)
+   If nr > 0 Then Set RR = RR.Resize(nr)
+   If nc > 0 Then Set RR = RR.Resize(,nc)
+   If RR.Rows.Count = 1 Then
+      ' １行しかないときには空という場合もあるので特別扱い
+      ' （そういうときに勝手に型が推定されてしまうので）
+      ' 空セルを Empty ではなくて "" にしておく。
+      c1 = RR.Columns.Count
+      ReDim Ary(1 To 1, 1 To c1)
+      For i = 1 To c1
+         V1 = RR.Cells(1,i).Value
+         ' If V1 = "" Then RR.Cells(1,i).Value = ""
+         ' ┣・・・セルに空文字列があっても動的に型変換されてしまう。
+         ' ┃　　　そこで、配列に、直接文字列を代入する。
+         If V1 = "" Then
+            Ary(1, i) = ""
+         Else
+            Ary(1, i) = V1
+         End If
+      Next i
+   Else
+      ' ２行以上あればそのまま配列に格納
+      Ary = RR
+   End If
 End Sub
 
 Private Sub 仕向地集計(strNameD As String, _
@@ -405,8 +441,23 @@ Private Sub 仕向地集計(strNameD As String, _
    Dim str承認記録() As String
    ' Call 承認記録読み取り(str承認記録)
    ' Call NamedRangeSQ2ArrStr("承認記録", str承認記録)
-   Call NamedRangeSQ2ArrStr(strNameD, str承認記録)
+   ' Call NamedRangeSQ2ArrStr(strNameD, str承認記録)
+   ' ┣・↓・承認記録フィルタ解除も行うため。
+   ' Call 承認記録読み取り(str承認記録)
+   ' ところが、これをやるとなぜか落ちる。そこで戻してみる。
+   '
    ' Stop
+   ' Call NamedRangeSQ2ArrStr(strNameD, str承認記録)
+   ' 内部で止めてみる。が、だめ。
+   ' Call 承認記録読み取り(str承認記録)
+   '
+   Call 承認記録フィルタ解除()
+   ' Stop
+   ' 無駄なようだが、ここでは分けて実行。これらをまとめたプロシジャは
+   ' なぜか、呼べない。呼ぶと落ちる。不思議だ。
+   Call NamedRangeSQ2ArrStr(strNameD, str承認記録)
+   '
+   
    ' ここから　配列　str承認記録　に対して　▼３／▼５を参考にして集計処理を行う。
    Dim U2 As Long
    ' 件数と金額を初期化（Emptyではなく0に）
@@ -973,6 +1024,7 @@ Private Sub 承認記録読み取り(str_承認記録() As String)
    ' ・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
    '
    Call 承認記録フィルタ解除()
+   ' Stop
    Call NamedRangeSQ2ArrStr("承認記録",str_承認記録)
 End Sub
 
@@ -1727,4 +1779,6 @@ End Sub
 Sub 承認記録フィルタ解除()
    On Error Resume Next
    ThisWorkbook.Names("承認記録").RefersToRange.Parent.ShowAllData
+   ' Stop
+   '
 End Sub
