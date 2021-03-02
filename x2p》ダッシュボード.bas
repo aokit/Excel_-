@@ -1777,8 +1777,12 @@ Private Sub NamedRange2ary(strName As String, _
 End Sub
 
 Sub 承認記録フィルタ解除()
-   On Error Resume Next
-   ThisWorkbook.Names("承認記録").RefersToRange.Parent.ShowAllData
+   ' On Error Resume Next
+   ' 無条件で .ShowAllData をすると落ちることがあるので、
+   ' 状態を確認して、絞り込まれているときにフィルタ解除する。
+   With ThisWorkbook.Names("承認記録").RefersToRange.Parent
+      If .FilterMode = True Then .ShowAllData
+   End With
    ' Stop
    '
 End Sub
